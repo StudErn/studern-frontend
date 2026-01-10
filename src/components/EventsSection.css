@@ -1,0 +1,110 @@
+.events-section {
+    padding: 2rem 0 4rem;
+    background-color: var(--color-bg-light);
+    /* Or white to distinguish? Hero was light. Jobs was white. This maybe light again. */
+}
+
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.event-card {
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s;
+}
+
+.event-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Gradients matching the image approximately */
+.card-teal {
+    background: linear-gradient(135deg, #4DB6AC 0%, #00796B 100%);
+}
+
+.card-dark {
+    background: linear-gradient(135deg, #263238 0%, #37474F 100%);
+}
+
+.card-gold {
+    background: linear-gradient(135deg, #FDD835 0%, #FBC02D 100%);
+    color: #333;
+    /* Dark text for gold card? Image shows dark text elements or white? "Intern Job Fair" looks dark blue. */
+}
+
+.card-gold h3,
+.card-gold p,
+.card-gold .event-tag {
+    color: #1F2937;
+}
+
+.event-content {
+    z-index: 1;
+    max-width: 70%;
+}
+
+.event-tag {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+.event-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.event-card p {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.event-btn {
+    background: white;
+    color: #00796B;
+    padding: 0.5rem 1.2rem;
+    border-radius: 4px;
+    font-weight: 600;
+    display: inline-block;
+    font-size: 0.9rem;
+}
+
+.event-btn.dark {
+    background: #1F2937;
+    color: white;
+}
+
+.event-illustration {
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.5);
+    transform: rotate(-15deg);
+}

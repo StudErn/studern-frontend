@@ -1,0 +1,163 @@
+.job-details-page {
+    min-height: 100vh;
+    background-color: #FAFAFA;
+    display: flex;
+    flex-direction: column;
+}
+
+.job-details-container {
+    background: white;
+    margin: 2rem auto;
+    padding: 3rem;
+    border-radius: 8px;
+    max-width: 900px;
+    /* Constrain width for readability like in the image */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.loading {
+    padding: 5rem;
+    text-align: center;
+    font-size: 1.2rem;
+    color: #666;
+}
+
+/* Header */
+.job-header {
+    margin-bottom: 2rem;
+}
+
+.company-name-large-text {
+    font-size: 2rem;
+    color: #4A5AE8;
+    /* Blue logo color */
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.company-full-name {
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+}
+
+.job-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 0.5rem;
+}
+
+.job-title-large {
+    font-size: 1.8rem;
+    color: #4A5AE8;
+    /* Purple/Blue */
+    font-weight: 700;
+}
+
+.job-deadline {
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.header-divider {
+    height: 1px;
+    background-color: #E0E0E0;
+    margin-top: 1rem;
+}
+
+/* Content */
+.job-content {
+    margin-bottom: 3rem;
+}
+
+.job-section {
+    margin-bottom: 1.5rem;
+}
+
+.job-section h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1F1F1F;
+    margin-bottom: 0.5rem;
+}
+
+.job-section p {
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.6;
+}
+
+.details-list {
+    list-style: none;
+    /* Custom bullets or dashes */
+    padding-left: 0.5rem;
+}
+
+.details-list li {
+    font-size: 0.95rem;
+    color: #333;
+    margin-bottom: 0.4rem;
+    position: relative;
+    padding-left: 1rem;
+}
+
+.details-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #555;
+    font-weight: bold;
+}
+
+.apply-now-btn.large {
+    background-color: #1A3C40;
+    /* Dark Teal */
+    color: white;
+    padding: 0.8rem 2.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-top: 2rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    border: none;
+}
+
+.apply-now-btn.large:hover {
+    opacity: 0.9;
+}
+
+/* Company Footer Card */
+.company-footer-card {
+    background-color: #F0F2F5;
+    /* Light Gray background */
+    padding: 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #333;
+    line-height: 1.6;
+}
+
+.company-footer-card p {
+    margin-bottom: 1rem;
+}
+
+.company-footer-card p:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .job-details-container {
+        padding: 1.5rem;
+        margin: 1rem auto;
+    }
+
+    .job-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
