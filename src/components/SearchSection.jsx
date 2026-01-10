@@ -1,36 +1,35 @@
 import React from 'react'
-import './SearchSection.css'
 
 const SearchSection = () => {
     return (
-        <section className="search-section">
-            <div className="container search-container">
-                <h2 className="search-title">
-                    Find the <span className="highlight">right</span> fit.
+        <section className="bg-[#A8D1D1] py-16 text-center">
+            <div className="container mx-auto px-4">
+                <h2 className="text-4xl md:text-5xl font-bold text-[#1F2937] mb-8 font-sans">
+                    Find the <span className="text-[#FFD700]">right</span> fit.
                 </h2>
 
-                <div className="search-bar">
+                <div className="max-w-[700px] mx-auto bg-white flex items-center p-0 rounded shadow-md mb-8">
                     <input
                         type="text"
                         placeholder="Search jobs, internships, keywords"
-                        className="search-input"
+                        className="flex-1 px-6 py-4 text-gray-700 outline-none border-none text-lg h-14 bg-transparent placeholder-gray-400"
                     />
-                    <button className="search-btn">
-                        {/* Simple SVG search icon */}
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <button className="bg-[#FFD700] w-16 h-14 flex items-center justify-center cursor-pointer hover:brightness-95 transition-all">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                     </button>
                 </div>
 
-                <div className="popular-searches">
-                    <span className="popular-label">popular searches</span>
-                    <div className="chips">
-                        <button className="chip">work from Home</button>
-                        <button className="chip">part-time</button>
-                        <button className="chip">Customer service</button>
-                        <button className="chip">IT</button>
+                <div className="flex flex-col items-center gap-4">
+                    <span className="font-bold text-gray-800 text-sm tracking-wide">popular searches</span>
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {["work from Home", "part-time", "Customer service", "IT"].map((tag, idx) => (
+                            <button key={idx} className="px-6 py-2 rounded-full border border-gray-400/50 bg-[#94C3C3] text-[#1F2937] text-sm font-semibold hover:bg-[#86Bebc] transition-colors cursor-pointer shadow-sm">
+                                {tag}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
