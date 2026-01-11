@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import logoPran from '../assets/Company job logos/Pran.png'
 import logoStartech from '../assets/Company job logos/Startech.png'
 import logoUnited from '../assets/Company job logos/United.png'
@@ -216,9 +217,9 @@ const JobsSection = () => {
                             </div>
                             <h3 className="text-xl font-bold mb-3 text-gray-900">Career Counselling</h3>
                             <p className="text-gray-600 mb-6 text-sm">Get expert guidance to navigate your career path and achieve your goals.</p>
-                            <button className="text-[#009688] font-bold text-sm flex items-center gap-1 hover:gap-2 transition-all">
+                            <Link to="/book-session" className="text-[#009688] font-bold text-sm flex items-center gap-1 hover:gap-2 transition-all">
                                 Book Session <span className="text-lg">→</span>
-                            </button>
+                            </Link>
                         </div>
 
                         {/* Essential Card 3 */}

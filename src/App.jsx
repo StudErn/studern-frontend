@@ -7,6 +7,7 @@ import Signup from './pages/Signup'
 import CoursesPage from './pages/CoursesPage'
 import InternshipSprintPage from './pages/InternshipSprintPage'
 import JobFairPage from './pages/JobFairPage'
+import BookSession from './pages/BookSession'
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/internship-sprint" element={<InternshipSprintPage />} />
           <Route path="/job-fair" element={<JobFairPage />} />
+          <Route path="/book-session" element={<BookSession />} />
         </Routes>
       </div>
     </BrowserRouter>
