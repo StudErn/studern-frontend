@@ -50,7 +50,7 @@ const FindJobs = () => {
             result = result.filter(job =>
                 job.title.toLowerCase().includes(lowerQuery) ||
                 job.company.toLowerCase().includes(lowerQuery) ||
-                job.highlights.some(h => h.toLowerCase().includes(lowerQuery))
+                job.highlights?.some(h => h.toLowerCase().includes(lowerQuery))
             );
         }
 
@@ -172,25 +172,34 @@ const FindJobs = () => {
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredJobs.map(job => (
-                                <div key={job.id} className="rounded-[20px] p-6 flex flex-col transition-transform hover:-translate-y-1 min-h-[300px]" style={{ backgroundColor: job.cardColor }}>
-                                    <div className="mb-4">
-                                        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white text-xs" style={{ backgroundColor: job.logoBg }}>
-                                            {job.logoText}
-                                        </div>
+                                <div key={job.id} className="rounded-[30px] p-8 flex flex-col transition-transform hover:-translate-y-1 min-h-[420px] relative mt-2" style={{ backgroundColor: job.cardColor }}>
+                                    <div className="mb-6 h-12 flex items-start">
+                                        {job.logo ? (
+                                            <img src={job.logo} alt={job.company} className="h-full object-contain" />
+                                        ) : (
+                                            <div className="text-xl font-bold text-gray-800">{job.company}</div>
+                                        )}
                                     </div>
 
-                                    <h3 className="text-lg font-bold mb-1 text-gray-900 leading-tight">{job.title}</h3>
-                                    <p className="text-sm text-gray-600 mb-4">{job.company}</p>
+                                    <h3 className="text-2xl font-bold mb-1 text-gray-900 leading-snug tracking-tight">{job.title}</h3>
+                                    <p className="text-gray-600 mb-8 font-medium">{job.company}</p>
 
-                                    <ul className="text-sm text-gray-700 mb-auto pl-2">
-                                        {job.highlights.map((highlight, idx) => (
-                                            <li key={idx} className="mb-1">• {highlight}</li>
+                                    <ul className="text-sm text-gray-800 mb-auto pl-4 list-disc space-y-2">
+                                        {job.highlights?.map((highlight, idx) => (
+                                            <li key={idx} className="leading-relaxed pl-1">{highlight}</li>
                                         ))}
                                     </ul>
 
-                                    <div className="mt-6 flex items-center justify-between">
-                                        <span className="text-xs text-gray-600 font-medium">📍 {job.workType}</span>
-                                        <Link to={`/jobs/${job.id}`} className="bg-[#1a3c40] text-white px-4 py-1.5 rounded-full text-xs font-semibold hover:opacity-90">Apply now</Link>
+                                    <div className="mt-8 flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-gray-700 font-medium">
+                                            <span className="bg-gray-800/10 p-1.5 rounded-full">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-600">
+                                                    <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                                                </svg>
+                                            </span>
+                                            <span className="text-sm">{job.workType}</span>
+                                        </div>
+                                        <Link to={`/jobs/${job.id}`} className="bg-[#1a3c40] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:opacity-90 tracking-wide">Apply now</Link>
                                     </div>
                                 </div>
                             ))}

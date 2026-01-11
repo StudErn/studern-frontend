@@ -1,11 +1,16 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+
 import logoPran from '../assets/Company job logos/Pran.png'
 import logoStartech from '../assets/Company job logos/Startech.png'
 import logoUnited from '../assets/Company job logos/United.png'
 import logoICI from '../assets/Company job logos/ICI.png'
 
-const JobCard = ({ title, company, location, salary, action, isHighlighted, logo, isInternship }) => (
+const JobCard = ({ id, title, company, location, salary, action, isHighlighted, logo, isInternship }) => (
     <div className={`rounded-[30px] p-6 flex flex-col h-full border ${isHighlighted ? 'bg-[#A8D1D1] border-transparent' : 'bg-white border-[#00BCD4]'} shadow-sm transition-transform hover:-translate-y-1`}>
         <div className="flex justify-between items-start mb-6">
             <div className="flex-1 pr-2">
@@ -36,13 +41,13 @@ const JobCard = ({ title, company, location, salary, action, isHighlighted, logo
 
         <div className="mt-auto">
             {isInternship ? (
-                <button className="text-[#155e63] font-bold text-sm flex items-center gap-1 ml-auto hover:gap-2 transition-all cursor-pointer">
+                <Link to={`/jobs/${id}`} className="text-[#155e63] font-bold text-sm flex items-center gap-1 ml-auto hover:gap-2 transition-all cursor-pointer inline-block">
                     {action} <span className="text-lg">→</span>
-                </button>
+                </Link>
             ) : (
-                <button className={`${isHighlighted ? 'bg-[#155e63]' : 'bg-[#155e63]'} text-white px-8 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity cursor-pointer`}>
+                <Link to={`/jobs/${id}`} className={`${isHighlighted ? 'bg-[#155e63]' : 'bg-[#155e63]'} text-white px-8 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity cursor-pointer inline-block text-center`}>
                     {action}
-                </button>
+                </Link>
             )}
         </div>
     </div>
@@ -53,6 +58,7 @@ const JobsSection = () => {
 
     const freshersJobs = [
         {
+            id: 'fj1',
             title: 'Client Acquisition Specialist',
             company: 'Pran-RFL Group',
             location: 'Work From Home',
@@ -62,6 +68,7 @@ const JobsSection = () => {
             isHighlighted: true
         },
         {
+            id: 'fj2',
             title: 'Internship - internship Contacts',
             company: '',
             location: 'Work From Home',
@@ -71,6 +78,7 @@ const JobsSection = () => {
             isHighlighted: false
         },
         {
+            id: 'fj3',
             title: 'Internship - internship Contacts',
             company: '',
             location: 'work from office',
@@ -83,6 +91,7 @@ const JobsSection = () => {
 
     const internships = [
         {
+            id: 'in1',
             title: 'Online courses with guaranteed interviews',
             company: '',
             location: 'Work From Home',
@@ -94,6 +103,7 @@ const JobsSection = () => {
             type: 'training'
         },
         {
+            id: 'in2',
             title: 'Internship - internship Contacts',
             company: '',
             location: 'work from office',
@@ -105,6 +115,7 @@ const JobsSection = () => {
             type: 'unpaid'
         },
         {
+            id: 'in3',
             title: 'Client Acquisition Specialist',
             company: 'Pran-RFL Group',
             location: 'Work From Home',
@@ -116,6 +127,7 @@ const JobsSection = () => {
             type: 'paid'
         },
         {
+            id: 'in4',
             title: 'Junior Web Developer',
             company: 'Tech Solutions',
             location: 'Remote',
@@ -180,10 +192,27 @@ const JobsSection = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filteredInternships.map((job, idx) => <JobCard key={idx} {...job} />)}
+                    <div className="relative group">
+                        <Swiper
+                            modules={[Navigation]}
+                            spaceBetween={32}
+                            slidesPerView={1}
+                            navigation
+                            breakpoints={{
+                                768: { slidesPerView: 2 },
+                                1024: { slidesPerView: 3 },
+                            }}
+                            className="pb-12 !px-4"
+                        >
+                            {filteredInternships.map((job, idx) => (
+                                <SwiperSlide key={idx} className="h-auto">
+                                    <JobCard {...job} />
+                                </SwiperSlide>
+                            ))}
+                        </Swiper>
+
                         {filteredInternships.length === 0 && (
-                            <div className="col-span-full text-center py-10 text-gray-500">
+                            <div className="text-center py-10 text-gray-500">
                                 No internships found for this filter.
                             </div>
                         )}

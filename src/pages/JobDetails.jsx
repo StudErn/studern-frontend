@@ -1,128 +1,145 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { jobsData } from '../data/jobs'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import './JobDetails.css'
 
 const JobDetails = () => {
     const { id } = useParams();
     const [job, setJob] = useState(null);
 
     useEffect(() => {
-        // Find job by ID
-        const foundJob = jobsData.find(j => j.id === parseInt(id));
+        // Find job by ID (handling string/number types properly)
+        const foundJob = jobsData.find(j => String(j.id) === String(id));
         setJob(foundJob);
+        // Scroll to top when page opens
+        window.scrollTo(0, 0);
     }, [id]);
 
     if (!job) {
         return (
-            <div className="job-details-page">
+            <div className="min-h-screen bg-[#F0F2F5] font-sans">
                 <Navbar />
-                <div className="container loading">Loading...</div>
+                <div className="container mx-auto px-4 py-12 text-center text-gray-500">
+                    Loading job details...
+                </div>
                 <Footer />
             </div>
         );
     }
 
     return (
-        <div className="job-details-page">
+        <div className="min-h-screen bg-[#F0F2F5] font-sans">
             <Navbar />
 
-            <div className="job-details-container container">
+            <div className="container mx-auto px-4 py-8">
+                {/* Main Card */}
+                <div className="max-w-4xl mx-auto bg-white rounded-[4px] shadow-sm p-8 md:p-12 mb-8">
 
-                <div className="job-header">
-                    <div className="job-header-top">
-                        <div className="company-info-large">
-                            <h2 className="company-name-large-text">{job.logoText === "NEC" ? "NEC" : job.company}</h2>
-                            {/* Assuming logoText is the logo acronym, using full name if available or constructing it */}
+                    {/* Header Section */}
+                    <div className="mb-8">
+                        {/* Logo */}
+                        <div className="mb-4">
+                            {job.logo ? (
+                                <img src={job.logo} alt={job.company} className="h-12 w-auto object-contain" />
+                            ) : (
+                                <div
+                                    className="w-12 h-12 rounded flex items-center justify-center text-white font-bold"
+                                    style={{ backgroundColor: job.logoBg || '#ccc' }}
+                                >
+                                    {job.logoText || job.company?.charAt(0)}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Company Name */}
+                        <h2 className="text-xl text-gray-800 font-medium mb-1">{job.company}</h2>
+
+                        {/* Title & Deadline Row */}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                            <h1 className="text-3xl font-bold text-[#4A5AE8] leading-tight">{job.title}</h1>
+                            <div className="text-gray-900 font-semibold whitespace-nowrap">
+                                Application deadline <span className="text-gray-900">{job.deadline}</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="job-title-row">
+                    <hr className="border-t border-gray-300 mb-8" />
+
+                    {/* Job Details Content */}
+                    <div className="space-y-6">
+
+                        {/* Vacancy */}
                         <div>
-                            <p className="company-full-name">{job.company}</p>
-                            <h1 className="job-title-large">{job.title}</h1>
+                            <h3 className="text-gray-900 font-bold mb-1 text-base">vacancy</h3>
+                            <p className="text-gray-700">{job.vacancy || 'Not specified'}</p>
                         </div>
-                        <div className="job-deadline">
-                            Application deadline <strong>{job.deadline}</strong>
+
+                        {/* Additional Requirements */}
+                        {job.additionalRequirements && job.additionalRequirements.length > 0 && (
+                            <div>
+                                <h3 className="text-gray-900 font-bold mb-2 text-base">Additional Requirements</h3>
+                                <ul className="list-disc pl-5 text-gray-700 space-y-1">
+                                    {job.additionalRequirements.map((req, idx) => (
+                                        <li key={idx}>{req}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Workplace */}
+                        <div>
+                            <h3 className="text-gray-900 font-bold mb-1 text-base">Workplace</h3>
+                            <p className="text-gray-700">{job.workType}</p>
                         </div>
-                    </div>
-                    <div className="header-divider"></div>
-                </div>
 
-                <div className="job-content">
-
-                    <div className="job-section">
-                        <h3>vacancy</h3>
-                        <p>{job.vacancy}</p>
-                    </div>
-
-                    <div className="job-section">
-                        <h3>Responsibilities & Context</h3>
-                        <ul className="details-list">
-                            {job.responsibilities?.map((item, idx) => (
-                                <li key={idx}>{item}</li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {job.additionalRequirements && (
-                        <div className="job-section">
-                            <h3>Additional Requirements</h3>
-                            <ul className="details-list">
-                                {job.additionalRequirements.map((req, idx) => (
-                                    <li key={idx}>{req}</li>
-                                ))}
-                            </ul>
+                        {/* Employment Status */}
+                        <div>
+                            <h3 className="text-gray-900 font-bold mb-1 text-base">Employment Status</h3>
+                            <p className="text-gray-700">{job.jobType}</p>
                         </div>
-                    )}
 
-                    <div className="job-section">
-                        <h3>Workplace</h3>
-                        <p>{job.workType}</p>
-                    </div>
+                        {/* Gender */}
+                        {job.gender && (
+                            <div>
+                                <h3 className="text-gray-900 font-bold mb-1 text-base">Gender</h3>
+                                <p className="text-gray-700">{job.gender}</p>
+                            </div>
+                        )}
 
-                    <div className="job-section">
-                        <h3>Employment Status</h3>
-                        <p>{job.jobType}</p>
-                    </div>
-
-                    {job.gender && (
-                        <div className="job-section">
-                            <h3>Gender</h3>
-                            <p>{job.gender}</p>
+                        {/* Job Location */}
+                        <div>
+                            <h3 className="text-gray-900 font-bold mb-1 text-base">Job Location</h3>
+                            <p className="text-gray-700">{job.location}</p>
                         </div>
-                    )}
 
-                    <div className="job-section">
-                        <h3>Job Location</h3>
-                        <p>{job.location}</p>
-                    </div>
+                        {/* Skills */}
+                        {job.skills && (
+                            <div>
+                                <h3 className="text-gray-900 font-bold mb-1 text-base">Skills & Expertise</h3>
+                                <p className="text-gray-700">{job.skills}</p>
+                            </div>
+                        )}
 
-                    {job.skills && (
-                        <div className="job-section">
-                            <h3>Skills & Expertise</h3>
-                            <p>{job.skills}</p>
+                        {/* Salary */}
+                        <div>
+                            <h3 className="text-gray-900 font-bold mb-1 text-base">Salary Range</h3>
+                            <p className="text-gray-700">{job.salary}</p>
                         </div>
-                    )}
 
-                    <div className="job-section">
-                        <h3>Salary Range</h3>
-                        <p>{job.salary}</p>
+                        {/* Apply Button */}
+                        <div className="mt-8">
+                            <button className="bg-[#155E63] text-white font-bold py-3 px-8 rounded-[8px] hover:opacity-90 transition-opacity">
+                                Apply now
+                            </button>
+                        </div>
+
                     </div>
 
-                    <button className="apply-now-btn large">Apply now</button>
+                    {/* Gray placeholder block from image (optional visual filler) */}
+                    <div className="mt-8 h-32 bg-gray-100 rounded w-full"></div>
 
                 </div>
-
-                {job.aboutCompany && (
-                    <div className="company-footer-card">
-                        <p><strong>Address:</strong><br />{job.companyAddress}</p>
-                        <p><strong>Business:</strong><br />{job.aboutCompany}</p>
-                    </div>
-                )}
-
             </div>
 
             <Footer />
