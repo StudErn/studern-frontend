@@ -4,6 +4,9 @@ import FindJobs from './pages/FindJobs'
 import JobDetails from './pages/JobDetails'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import CoursesPage from './pages/CoursesPage'
+import InternshipSprintPage from './pages/InternshipSprintPage'
+import JobFairPage from './pages/JobFairPage'
 
 function App() {
   return (
@@ -15,6 +18,9 @@ function App() {
           <Route path="/jobs/:id" element={<JobDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/internship-sprint" element={<InternshipSprintPage />} />
+          <Route path="/job-fair" element={<JobFairPage />} />
         </Routes>
       </div>
     </BrowserRouter>
