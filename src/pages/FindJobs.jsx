@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { jobsData } from '../data/jobs'
 
 const FindJobs = () => {
+    const [searchParams] = useSearchParams();
+    const initialQuery = searchParams.get('query') || '';
+
+    // Initialize searchQuery with the URL param if present
+    const [searchQuery, setSearchQuery] = useState(initialQuery);
+
     const [filteredJobs, setFilteredJobs] = useState(jobsData);
     const [filters, setFilters] = useState({
         experience: [],
@@ -32,10 +38,21 @@ const FindJobs = () => {
             jobType: [],
             workType: []
         });
+        setSearchQuery('');
     };
 
     useEffect(() => {
         let result = jobsData;
+
+        // Filter by Search Query
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            result = result.filter(job =>
+                job.title.toLowerCase().includes(lowerQuery) ||
+                job.company.toLowerCase().includes(lowerQuery) ||
+                job.highlights.some(h => h.toLowerCase().includes(lowerQuery))
+            );
+        }
 
         if (filters.experience.length > 0) {
             result = result.filter(job => filters.experience.includes(job.experience));
@@ -48,7 +65,7 @@ const FindJobs = () => {
         }
 
         setFilteredJobs(result);
-    }, [filters]);
+    }, [filters, searchQuery]);
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
@@ -64,6 +81,8 @@ const FindJobs = () => {
                         type="text"
                         placeholder="Job title keyword or skill"
                         className="flex-1 border-none outline-none text-base w-full p-2 md:p-0 border-b border-gray-100 md:border-none"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     <button className="bg-primary text-white px-6 py-2 rounded-full font-semibold w-full md:w-auto hover:opacity-90 transition-opacity">search</button>
                 </div>
@@ -71,7 +90,11 @@ const FindJobs = () => {
                 <div className="flex justify-center gap-2 items-center flex-wrap">
                     <span className="font-semibold mr-2">Trending skill:</span>
                     {["UI/UX", "Frontend dev", "Backend dev", "Data analysis", "Graphic designer"].map((skill, idx) => (
-                        <button key={idx} className={`px-4 py-1.5 rounded-full text-sm font-medium border-none mb-2 transition-colors ${idx === 0 ? 'bg-indigo-50 text-indigo-600 border border-indigo-600' : 'bg-gray-100 text-gray-800 hover:bg-indigo-50 hover:text-indigo-600'}`}>
+                        <button
+                            key={idx}
+                            onClick={() => setSearchQuery(skill)}
+                            className={`px-4 py-1.5 rounded-full text-sm font-medium border-none mb-2 transition-colors cursor-pointer ${searchQuery.toLowerCase() === skill.toLowerCase() ? 'bg-indigo-50 text-indigo-600 border border-indigo-600 ring-1 ring-indigo-600' : 'bg-gray-100 text-gray-800 hover:bg-indigo-50 hover:text-indigo-600'}`}
+                        >
                             {skill}
                         </button>
                     ))}

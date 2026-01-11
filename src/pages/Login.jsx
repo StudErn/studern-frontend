@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import loginImage from '../assets/loginimages.png'
+import studernLogo from '../assets/StudErn Logo.png'
 
 const Login = () => {
     return (
@@ -18,17 +19,8 @@ const Login = () => {
                 {/* Right Side Form */}
                 <div className="flex-1 w-full max-w-[450px] p-4 md:p-8">
                     {/* Logo */}
-                    <div className="text-center mb-10 flex items-center justify-center relative">
-                        <div className="relative inline-block">
-                            <span className="text-[#1F2040] text-4xl font-bold">Stud</span>
-                            <span className="text-[#00B8D4] text-4xl font-bold">Ern</span>
-                            {/* Graduation Cap Icon - absolute positioned to match Navbar style roughly or integrated */}
-                            <div className="absolute -top-3 -right-4 text-[#1F2040]">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z" />
-                                </svg>
-                            </div>
-                        </div>
+                    <div className="text-center mb-10">
+                        <img src={studernLogo} alt="StudErn Logo" className="h-16 w-auto object-contain mx-auto" />
                     </div>
 
                     <form className="flex flex-col gap-5">

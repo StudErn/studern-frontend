@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import studernLogo from '../assets/StudErn Logo.png'
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,17 +13,8 @@ const Navbar = () => {
         <nav className="py-5 bg-white border-b border-gray-100">
             <div className="container mx-auto px-6 flex items-center justify-between">
                 {/* Logo */}
-                <Link to="/" className="flex items-center gap-2 text-2xl font-bold cursor-pointer no-underline">
-                    <div className="relative">
-                        <span className="text-primary text-3xl">Stud</span>
-                        <span className="text-secondary text-3xl">Ern</span>
-                        {/* Graduation Cap Icon */}
-                        <div className="absolute -top-4 right-0 text-primary">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z" />
-                            </svg>
-                        </div>
-                    </div>
+                <Link to="/" className="flex items-center cursor-pointer no-underline transition-opacity hover:opacity-90">
+                    <img src={studernLogo} alt="StudErn Logo" className="h-10 w-auto object-contain" />
                 </Link>
 
                 {/* Desktop Menu - Centered Links */}
