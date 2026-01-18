@@ -1,13 +1,37 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import loginImage from '../assets/loginimages.png'
 import studernLogo from '../assets/StudErn Logo.png'
 
 const Login = () => {
+    const [identifier, setIdentifier] = useState('')
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+    const { login } = useAuth()
+    const navigate = useNavigate()
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setError('')
+        setLoading(true)
+
+        const result = await login(identifier, password)
+
+        if (result.success) {
+            navigate('/')
+        } else {
+            setError(result.message)
+        }
+
+        setLoading(false)
+    }
+
     return (
         <div className="min-h-screen flex flex-col bg-white p-4 md:p-8 font-sans">
             <div className="mb-4">
-                <Link to="/" className="text-[#1A3C40] text-sm font-bold no-underline hover:underline">Go to Home</Link>
+                <button onClick={() => navigate(-1)} className="text-[#1A3C40] text-sm font-bold no-underline hover:underline">Go back</button>
             </div>
 
             <div className="flex flex-1 max-w-[1200px] mx-auto w-full items-center justify-center gap-8 lg:gap-20 flex-col md:flex-row">
@@ -23,20 +47,46 @@ const Login = () => {
                         <img src={studernLogo} alt="StudErn Logo" className="h-16 w-auto object-contain mx-auto" />
                     </div>
 
-                    <form className="flex flex-col gap-5">
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                         <div className="w-full">
-                            <input type="text" placeholder="Email or Username" className="w-full p-4 px-5 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-800 focus:bg-white focus:ring-1 focus:ring-[#00B8D4] outline-none placeholder-gray-400 transition-all font-medium" />
+                            <input
+                                type="text"
+                                placeholder="Email or Phone"
+                                value={identifier}
+                                onChange={(e) => setIdentifier(e.target.value)}
+                                className="w-full p-4 px-5 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-800 focus:bg-white focus:ring-1 focus:ring-[#00B8D4] outline-none placeholder-gray-400 transition-all font-medium"
+                                required
+                            />
                         </div>
 
                         <div className="w-full">
-                            <input type="password" placeholder="Password" className="w-full p-4 px-5 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-800 focus:bg-white focus:ring-1 focus:ring-[#00B8D4] outline-none placeholder-gray-400 transition-all font-medium" />
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full p-4 px-5 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-800 focus:bg-white focus:ring-1 focus:ring-[#00B8D4] outline-none placeholder-gray-400 transition-all font-medium"
+                                required
+                            />
                         </div>
 
                         <div className="text-right">
                             <a href="#" className="text-[#1F2040] text-sm font-bold no-underline hover:underline opacity-80">Forget password?</a>
                         </div>
 
-                        <button type="submit" className="bg-[#1A3C40] text-white p-4 rounded-[15px] font-bold text-base mt-2 hover:opacity-90 w-full transition-transform hover:-translate-y-px shadow-xl shadow-[#1A3C40]/20 cursor-pointer">Login</button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="bg-[#1A3C40] text-white p-4 rounded-[15px] font-bold text-base mt-2 hover:opacity-90 w-full transition-transform hover:-translate-y-px shadow-xl shadow-[#1A3C40]/20 cursor-pointer disabled:opacity-50"
+                        >
+                            {loading ? 'Logging in...' : 'Login'}
+                        </button>
                     </form>
 
                     <div className="flex items-center my-8 text-black text-sm font-bold">
