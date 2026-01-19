@@ -85,9 +85,20 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
+      
+      let errors = null;
+      if (error.response?.status === 422 && (error.response?.data?.errors || error.response?.data?.messages)) {
+        const errorData = error.response.data.errors || error.response.data.messages;
+        errors = {};
+        Object.keys(errorData).forEach(key => {
+          errors[key] = errorData[key][0]; // Get first error message
+        });
+      }
+      
       return {
         success: false,
         message: error.response?.data?.message || 'Login failed',
+        errors: errors,
       };
     }
   };

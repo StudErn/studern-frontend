@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 .swiper-button-next,
 .swiper-button-prev {
@@ -30,8 +31,6 @@
 }
 
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
 @theme {
   --font-sans: 'Outfit', sans-serif;
   --color-primary: #1F2040;
@@ -47,4 +46,19 @@ body {
   font-family: var(--font-primary);
   /* Using @apply in v4 works, but we can also just use standard classes on the body tag in index.html if this fails again. */
   @apply bg-gray-50 text-gray-900;
+}
+/* Toast animations */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
 }

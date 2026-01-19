@@ -2,11 +2,11 @@ import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
-const DashboardSidebar = ({ selectedRole, onRoleChange, availableRoles }) => {
+const DashboardSidebar = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
     const location = useLocation()
 
-    const applicantMenuItems = [
+    const menuItems = [
         { icon: '📊', label: 'Dashboard', path: '/' },
         { icon: '💼', label: 'Find Jobs', path: '/find-jobs' },
         { icon: '📝', label: 'My Applications', path: '/applications' },
@@ -14,35 +14,6 @@ const DashboardSidebar = ({ selectedRole, onRoleChange, availableRoles }) => {
         { icon: '📅', label: 'Interviews', path: '/interviews' },
         { icon: '👤', label: 'Profile', path: '/profile' },
     ]
-
-    const recruiterMenuItems = [
-        { icon: '📊', label: 'Dashboard', path: '/' },
-        { icon: '➕', label: 'Post Job', path: '/post-job' },
-        { icon: '💼', label: 'My Jobs', path: '/my-jobs' },
-        { icon: '👥', label: 'Applicants', path: '/applicants' },
-        { icon: '📅', label: 'Interviews', path: '/interviews' },
-        { icon: '🏢', label: 'Company', path: '/company' },
-    ]
-
-    const adminMenuItems = [
-        { icon: '📊', label: 'Dashboard', path: '/' },
-        { icon: '👥', label: 'Users', path: '/admin/users' },
-        { icon: '🏢', label: 'Companies', path: '/admin/companies' },
-        { icon: '💼', label: 'Jobs', path: '/admin/jobs' },
-        { icon: '🔑', label: 'Privileges', path: '/admin/privileges' },
-        { icon: '📈', label: 'Analytics', path: '/admin/analytics' },
-    ]
-
-    const getMenuItems = () => {
-        switch (selectedRole) {
-            case 'recruiter':
-                return recruiterMenuItems
-            case 'admin':
-                return adminMenuItems
-            default:
-                return applicantMenuItems
-        }
-    }
 
     return (
         <>
@@ -64,38 +35,16 @@ const DashboardSidebar = ({ selectedRole, onRoleChange, availableRoles }) => {
                 />
             )}
 
-            {/* Sidebar */}
             <aside
                 className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-100 z-40 transition-transform duration-300 ${
                     isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                 }`}
             >
                 <div className="flex flex-col h-full">
-                    {/* Role Selector */}
-                    {availableRoles.length > 1 && (
-                        <div className="p-4 border-b border-gray-100">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
-                                View as
-                            </label>
-                            <select
-                                value={selectedRole}
-                                onChange={(e) => {
-                                    onRoleChange(e)
-                                    setIsSidebarOpen(false)
-                                }}
-                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-800 focus:ring-2 focus:ring-[#00B8D4] focus:border-[#00B8D4] outline-none cursor-pointer"
-                            >
-                                {availableRoles.includes('applicant') && <option value="applicant">Applicant</option>}
-                                {availableRoles.includes('recruiter') && <option value="recruiter">Recruiter</option>}
-                                {availableRoles.includes('admin') && <option value="admin">Admin</option>}
-                            </select>
-                        </div>
-                    )}
-
                     {/* Menu Items */}
                     <nav className="flex-1 overflow-y-auto p-4">
                         <ul className="space-y-1">
-                            {getMenuItems().map((item, index) => (
+                            {menuItems.map((item, index) => (
                                 <li key={index}>
                                     <Link
                                         to={item.path}

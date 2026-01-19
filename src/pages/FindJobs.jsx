@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { jobsData } from '../data/jobs'
 
 const FindJobs = () => {
+    const { isAuthenticated } = useAuth()
+    const navigate = useNavigate()
     const [searchParams] = useSearchParams();
     const initialQuery = searchParams.get('query') || '';
+
+    // Redirect to dashboard if user is logged in
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/dashboard', { replace: true })
+        }
+    }, [isAuthenticated, navigate])
 
     // Initialize searchQuery with the URL param if present
     const [searchQuery, setSearchQuery] = useState(initialQuery);

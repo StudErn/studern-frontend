@@ -106,7 +106,7 @@ const Navbar = () => {
                     ) : (
                         <>
                             <Link to="/signup" className="px-5 py-2 rounded-lg font-semibold text-sm bg-gradient-to-r from-[#00B8D4] to-[#1A3C40] text-white hover:shadow-lg hover:scale-105 transition-all">
-                                Get Started
+                                Join Now
                             </Link>
                             <Link to="/login" className="px-5 py-2 rounded-lg font-semibold text-sm border-2 border-[#1A3C40] text-[#1A3C40] hover:bg-[#1A3C40] hover:text-white transition-all">
                                 Login

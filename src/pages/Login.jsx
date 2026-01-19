@@ -1,28 +1,38 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import loginImage from '../assets/loginimages.png'
 import studernLogo from '../assets/StudErn Logo.png'
+import { Eye, EyeOff } from 'lucide-react'
 
 const Login = () => {
     const [identifier, setIdentifier] = useState('')
     const [password, setPassword] = useState('')
-    const [error, setError] = useState('')
+    const [fieldErrors, setFieldErrors] = useState({})
     const [loading, setLoading] = useState(false)
     const { login } = useAuth()
     const navigate = useNavigate()
+    const toast = useToast()
+    const [showPassword, setShowPassword] = useState(false)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setError('')
+        setFieldErrors({})
         setLoading(true)
 
         const result = await login(identifier, password)
 
         if (result.success) {
-            navigate('/')
+            toast.success('Login successful! Redirecting...')
+            setTimeout(() => {
+                navigate('/')
+            }, 1000)
         } else {
-            setError(result.message)
+            toast.error(result.message || 'Login failed')
+            if (result.errors) {
+                setFieldErrors(result.errors)
+            }
         }
 
         setLoading(false)
@@ -47,37 +57,68 @@ const Login = () => {
                         <img src={studernLogo} alt="StudErn Logo" className="h-16 w-auto object-contain mx-auto" />
                     </div>
 
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                            {error}
-                        </div>
-                    )}
-
                     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                         <div className="w-full">
                             <input
                                 type="text"
                                 placeholder="Email or Phone"
                                 value={identifier}
-                                onChange={(e) => setIdentifier(e.target.value)}
-                                className="w-full p-4 px-5 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-800 focus:bg-white focus:ring-1 focus:ring-[#00B8D4] outline-none placeholder-gray-400 transition-all font-medium"
+                                onChange={(e) => {
+                                    setIdentifier(e.target.value)
+                                    if (fieldErrors.identifier) {
+                                        setFieldErrors({ ...fieldErrors, identifier: '' })
+                                    }
+                                }}
+                                className={`w-full p-4 px-5 border rounded-xl text-sm text-gray-800 focus:bg-white focus:ring-1 outline-none placeholder-gray-400 transition-all font-medium ${
+                                    fieldErrors.identifier 
+                                        ? 'bg-red-50 border-red-500 focus:ring-red-500' 
+                                        : 'bg-gray-50 border-gray-100 focus:ring-[#00B8D4]'
+                                }`}
                                 required
                             />
+                            {fieldErrors.identifier && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.identifier}</p>
+                            )}
                         </div>
 
-                        <div className="w-full">
+                        <div className="w-full relative">
                             <input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 placeholder="Password"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full p-4 px-5 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-800 focus:bg-white focus:ring-1 focus:ring-[#00B8D4] outline-none placeholder-gray-400 transition-all font-medium"
+                                onChange={(e) => {
+                                    setPassword(e.target.value)
+                                    if (fieldErrors.password) {
+                                        setFieldErrors({ ...fieldErrors, password: '' })
+                                    }
+                                }}
+                                className={`w-full p-4 px-5 pr-12 border rounded-xl text-sm text-gray-800 focus:bg-white focus:ring-1 outline-none placeholder-gray-400 transition-all font-medium ${
+                                    fieldErrors.password
+                                        ? 'bg-red-50 border-red-500 focus:ring-red-500'
+                                        : 'bg-gray-50 border-gray-100 focus:ring-[#00B8D4]'
+                                }`}
                                 required
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                            {fieldErrors.password && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.password}</p>
+                            )}
                         </div>
 
                         <div className="text-right">
-                            <a href="#" className="text-[#1F2040] text-sm font-bold no-underline hover:underline opacity-80">Forget password?</a>
+                            <button
+                                type="button"
+                                onClick={() => navigate('/forgot-password')}
+                                className="text-[#1F2040] text-sm font-bold no-underline hover:underline opacity-80"
+                            >
+                                Forget password?
+                            </button>
                         </div>
 
                         <button
@@ -117,6 +158,10 @@ const Login = () => {
 
                     <p className="text-center mt-8 text-sm text-gray-500 font-medium">
                         Don't have an account? <Link to="/signup" className="text-[#4A5AE8] font-bold ml-1 hover:underline">Sign up</Link>
+                    </p>
+
+                    <p className="text-center mt-3 text-sm text-gray-500 font-medium">
+                        Need to verify your contact? <button onClick={() => navigate('/verify-contact')} className="text-[#00B8D4] font-bold ml-1 hover:underline">Verify here</button>
                     </p>
                 </div>
             </div>
