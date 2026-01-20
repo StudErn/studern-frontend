@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useHiring } from '../../contexts/HiringContext';
 import { useCompany } from '../../contexts/CompanyContext';
 import {
@@ -14,11 +14,16 @@ import {
 
 const CreateHiring = () => {
   const navigate = useNavigate();
+  const { companyId: companyIdParam } = useParams();
   const { selectedCompany } = useCompany();
   const { createHiring } = useHiring();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
   const [step, setStep] = useState(1);
+
+  // Use companyId from URL params or fall back to selectedCompany
+  const companyId = companyIdParam || selectedCompany?.id;
 
   const [formData, setFormData] = useState({
     job_title: '',
@@ -128,6 +133,7 @@ const CreateHiring = () => {
 
     // Build payload based on hiring type
     const payload = {
+      company_id: parseInt(companyId),
       job_title: formData.job_title,
       hiring_type: formData.hiring_type,
       work_from: formData.work_from,
@@ -177,6 +183,7 @@ const CreateHiring = () => {
       navigate(`/company/${companyId}/hiring`);
     } else {
       setError(result.message);
+      setErrors(result.errors || {});
     }
   };
 
@@ -184,6 +191,23 @@ const CreateHiring = () => {
     formData.hiring_type === 'job'
       ? formData.job_details.perks
       : formData.internship_details.perks;
+
+  // Show loading state if no company is selected
+  if (!companyId) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-8 text-center">
+          <p className="text-gray-600">Please select a company first.</p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="mt-4 px-4 py-2 bg-[#00B8D4] text-white rounded-lg hover:bg-[#0097a7] transition"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -211,7 +235,16 @@ const CreateHiring = () => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
+              <p className="font-medium">{error}</p>
+              {Object.keys(errors).length > 0 && (
+                <ul className="mt-2 list-disc list-inside space-y-1">
+                  {Object.entries(errors).map(([field, messages]) => (
+                    <li key={field} className="text-sm">
+                      {Array.isArray(messages) ? messages[0] : messages}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 

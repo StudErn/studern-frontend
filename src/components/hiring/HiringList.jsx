@@ -16,9 +16,11 @@ import {
   Search,
 } from 'lucide-react';
 
-const HiringList = () => {
+const HiringList = ({ company, companyId: companyIdProp }) => {
   const navigate = useNavigate();
   const { selectedCompany, hasPrivilege } = useCompany();
+  const effectiveCompany = company || selectedCompany;
+  const effectiveCompanyId = companyIdProp || effectiveCompany?.id;
   const { getCompanyHirings, deleteHiring, loading } = useHiring();
   const [hirings, setHirings] = useState([]);
   const [filteredHirings, setFilteredHirings] = useState([]);
@@ -34,20 +36,23 @@ const HiringList = () => {
   const canPost = hasPrivilege('can_post_jobs');
 
   useEffect(() => {
-    if (selectedCompany) {
-      loadHirings();
+    if (effectiveCompanyId) {
+      loadHirings(effectiveCompanyId);
     }
-  }, [selectedCompany]);
+  }, [effectiveCompanyId]);
 
   useEffect(() => {
     applyFilters();
   }, [hirings, searchTerm, filters]);
 
-  const loadHirings = async () => {
-    if (!selectedCompany) return;
-    const result = await getCompanyHirings(selectedCompany.id);
+  const loadHirings = async (companyId) => {
+    if (!companyId) return;
+    const result = await getCompanyHirings(companyId);
     if (result.success) {
-      setHirings(result.data);
+      setHirings(result.data || []);
+    } else {
+      console.error('Failed to load hirings:', result.message);
+      setHirings([]);
     }
   };
 
@@ -90,7 +95,7 @@ const HiringList = () => {
   const handleDelete = async (hiringId) => {
     if (!window.confirm('Are you sure you want to delete this posting?')) return;
 
-    const result = await deleteHiring(companyId, hiringId);
+    const result = await deleteHiring(selectedCompany.id, hiringId);
     if (result.success) {
       loadHirings();
     }
@@ -113,24 +118,43 @@ const HiringList = () => {
   };
 
   const formatSalary = (hiring) => {
+    if (!hiring) return 'Not specified';
+
     if (hiring.hiring_type === 'job' && hiring.job_detail) {
       const job = hiring.job_detail;
       if (job.payment_type === 'fixed_pay') {
         if (job.min_salary && job.max_salary) {
-          return `${job.currency} ${job.min_salary.toLocaleString()} - ${job.max_salary.toLocaleString()} / ${job.pay_per}`;
+          return `${job.currency || 'BDT'} ${job.min_salary.toLocaleString()} - ${job.max_salary.toLocaleString()} / ${job.pay_per || 'year'}`;
         }
-        return `${job.currency} ${job.min_salary?.toLocaleString() || 'N/A'} / ${job.pay_per}`;
+        return `${job.currency || 'BDT'} ${job.min_salary?.toLocaleString() || 'N/A'} / ${job.pay_per || 'year'}`;
       }
       return 'Performance based';
     } else if (hiring.hiring_type === 'internship' && hiring.internship_detail) {
       const intern = hiring.internship_detail;
       if (intern.min_stipend && intern.max_stipend) {
-        return `${intern.currency} ${intern.min_stipend.toLocaleString()} - ${intern.max_stipend.toLocaleString()} / ${intern.pay_per}`;
+        return `${intern.currency || 'BDT'} ${intern.min_stipend.toLocaleString()} - ${intern.max_stipend.toLocaleString()} / ${intern.pay_per || 'month'}`;
       }
       return 'Unpaid / Learning';
     }
     return 'Not specified';
   };
+
+  // Show loading state if no company is selected
+  if (!effectiveCompany) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-8 text-center">
+          <p className="text-gray-600">Please select a company first.</p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="mt-4 px-4 py-2 bg-[#00B8D4] text-white rounded-lg hover:bg-[#0097a7] transition"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -147,7 +171,7 @@ const HiringList = () => {
         </div>
         {canPost && (
           <button
-            onClick={() => navigate(`/company/${companyId}/hiring/create`)}
+            onClick={() => navigate(`/company/${effectiveCompany.id}/hiring/create`)}
             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-[1.02] transition"
           >
             <Plus className="w-5 h-5" />
@@ -229,7 +253,7 @@ const HiringList = () => {
           </p>
           {canPost && (
             <button
-              onClick={() => navigate(`/company/${companyId}/hiring/create`)}
+              onClick={() => navigate(`/company/${effectiveCompany.id}/hiring/create`)}
               className="px-6 py-3 bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-[1.02] transition"
             >
               Create Posting
@@ -303,7 +327,7 @@ const HiringList = () => {
                       {(hiring.hiring_type === 'job'
                         ? hiring.job_detail.perks
                         : hiring.internship_detail.perks
-                      ).map((perk, index) => (
+                      )?.map((perk, index) => (
                         <span
                           key={index}
                           className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
@@ -319,7 +343,7 @@ const HiringList = () => {
                 <div className="flex gap-2 pt-4 border-t">
                   <button
                     onClick={() =>
-                      navigate(`/company/${companyId}/hiring/${hiring.id}`)
+                      navigate(`/company/${effectiveCompany.id}/hiring/${hiring.id}`)
                     }
                     className="flex items-center gap-2 px-4 py-2 text-[#00B8D4] border-2 border-[#00B8D4] rounded-lg font-semibold hover:bg-[#00B8D4] hover:text-white transition"
                   >
@@ -330,7 +354,7 @@ const HiringList = () => {
                     <>
                       <button
                         onClick={() =>
-                          navigate(`/company/${companyId}/hiring/${hiring.id}/edit`)
+                          navigate(`/company/${effectiveCompany.id}/hiring/${hiring.id}/edit`)
                         }
                         className="flex items-center gap-2 px-4 py-2 text-blue-600 border-2 border-blue-600 rounded-lg font-semibold hover:bg-blue-600 hover:text-white transition"
                       >

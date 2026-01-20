@@ -1,10 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { ViewProvider } from './contexts/ViewContext'
 import { CompanyProvider } from './contexts/CompanyContext'
 import { HiringProvider } from './contexts/HiringContext'
 import { ToastProvider } from './contexts/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
-import DashboardLayout from './components/DashboardLayout'
+import AppLayout from './components/AppLayout'
 import RootPage from './pages/RootPage'
 import FindJobs from './pages/FindJobs'
 import JobDetails from './pages/JobDetails'
@@ -18,21 +19,32 @@ import InternshipSprintPage from './pages/InternshipSprintPage'
 import JobFairPage from './pages/JobFairPage'
 import BookSession from './pages/BookSession'
 import CreateCompany from './pages/CreateCompany'
+import PostJob from './components/hiring/CreateHiring'
 import CompanyDashboard from './pages/CompanyDashboard'
 import CompanyDashboardPage from './pages/CompanyDashboardPage'
 import CompanyOverview from './pages/CompanyOverview'
+import DashboardJobs from './pages/DashboardJobs'
 import JobBrowse from './pages/JobBrowse'
 import CreateHiring from './components/hiring/CreateHiring'
 import HiringList from './components/hiring/HiringList'
 import MemberManagement from './components/company/MemberManagement'
+import SystemSettings from './pages/SystemSettings'
+import AdminUsers from './pages/AdminUsers'
+import AdminCompanies from './pages/AdminCompanies'
+import AdminHiring from './pages/AdminHiring'
+import Applications from './pages/Applications'
+import Interviews from './pages/Interviews'
+import SavedJobs from './pages/SavedJobs'
+import Profile from './pages/Profile'
 
 function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <CompanyProvider>
-          <HiringProvider>
-            <BrowserRouter>
+        <ViewProvider>
+          <CompanyProvider>
+            <HiringProvider>
+              <BrowserRouter>
               <div className="app">
                 <Routes>
                   {/* Public Routes */}
@@ -51,15 +63,35 @@ function App() {
                   <Route path="/find-jobs" element={<FindJobs />} />
                   <Route path="/jobs" element={<JobBrowse />} />
                   <Route path="/jobs/:id" element={<JobDetails />} />
+                  <Route path="/applications" element={
+                    <ProtectedRoute>
+                      <Applications />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/saved-jobs" element={
+                    <ProtectedRoute>
+                      <SavedJobs />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/interviews" element={
+                    <ProtectedRoute>
+                      <Interviews />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } />
                   
                   {/* Protected Dashboard Routes */}
                   <Route path="/dashboard" element={
                     <ProtectedRoute>
-                      <DashboardLayout />
+                      <AppLayout />
                     </ProtectedRoute>
                   }>
                     <Route index element={<CompanyDashboardPage />} />
-                    <Route path="jobs" element={<HiringList />} />
+                    <Route path="jobs" element={<DashboardJobs />} />
                     <Route path="jobs/create" element={<CreateHiring />} />
                     <Route path="members" element={<MemberManagement />} />
                   </Route>
@@ -75,13 +107,40 @@ function App() {
                     <Route path="overview" element={<CompanyOverview />} />
                     <Route path="hiring" element={<HiringList />} />
                     <Route path="hiring/create" element={<CreateHiring />} />
+                    <Route path="jobs/create" element={<CreateHiring />} />
+                    <Route path="post-job" element={<PostJob />} />
                     <Route path="members" element={<MemberManagement />} />
                   </Route>
+                  
+                  {/* System Settings Route - Only for system panel users */}
+                  <Route path="/system-settings" element={
+                    <ProtectedRoute>
+                      <SystemSettings />
+                    </ProtectedRoute>
+                  } />
+
+                  {/* Admin Routes - Only for system panel users */}
+                  <Route path="/admin/users" element={
+                    <ProtectedRoute>
+                      <AdminUsers />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/companies" element={
+                    <ProtectedRoute>
+                      <AdminCompanies />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/hiring" element={
+                    <ProtectedRoute>
+                      <AdminHiring />
+                    </ProtectedRoute>
+                  } />
                 </Routes>
               </div>
             </BrowserRouter>
           </HiringProvider>
         </CompanyProvider>
+        </ViewProvider>
       </AuthProvider>
     </ToastProvider>
   )

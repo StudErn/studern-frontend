@@ -15,6 +15,11 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [privileges, setPrivileges] = useState({
+    system_privileges: [],
+    company_privileges: [],
+    available_views: []
+  });
 
   // API base URL - adjust if needed
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'; // Assuming backend runs on 8000
@@ -29,6 +34,9 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(storedUser));
       // Set axios default header
       axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      
+      // Fetch user privileges on app load if authenticated
+      fetchPrivileges();
     }
     setLoading(false);
 
@@ -82,6 +90,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData));
       axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
 
+      // Fetch user privileges after successful login
+      await fetchPrivileges();
+
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
@@ -128,6 +139,11 @@ export const AuthProvider = ({ children }) => {
       // Ensure state is cleared
       setToken(null);
       setUser(null);
+      setPrivileges({
+        system_privileges: [],
+        company_privileges: [],
+        available_views: []
+      });
     }
   };
 
@@ -150,13 +166,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const fetchPrivileges = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/user/privileges`);
+      const privilegeData = response.data.data;
+      setPrivileges(privilegeData);
+      return { success: true, data: privilegeData };
+    } catch (error) {
+      console.error('Fetch privileges error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch privileges'
+      };
+    }
+  };
+
   const value = {
     user,
     token,
     loading,
+    privileges,
     login,
     logout,
     refreshToken,
+    fetchPrivileges,
     isAuthenticated: !!token,
   };
 

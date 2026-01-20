@@ -1,6 +1,6 @@
 import React from 'react'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import Dashboard from '../pages/Dashboard'
 import Home from '../pages/Home'
 
 const RootPage = () => {
@@ -17,7 +17,7 @@ const RootPage = () => {
         )
     }
 
-    return isAuthenticated ? <Dashboard /> : <Home />
+    return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />
 }
 
 export default RootPage

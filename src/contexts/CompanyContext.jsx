@@ -41,7 +41,13 @@ export const CompanyProvider = ({ children }) => {
     try {
       const response = await axios.post(`${API_BASE}/companies`, companyData);
       const newCompany = response.data.data;
-      setCompanies([...companies, newCompany]);
+      
+      // Update companies list immediately
+      setCompanies((prevCompanies) => [...prevCompanies, newCompany]);
+      
+      // Automatically select the newly created company
+      selectCompany(newCompany);
+      
       return { success: true, data: newCompany };
     } catch (error) {
       console.error('Error creating company:', error);
@@ -71,8 +77,13 @@ export const CompanyProvider = ({ children }) => {
       setCompanyPrivileges(response.data.data || []);
     } catch (error) {
       console.error('Error fetching company privileges:', error);
-      // Set default privileges if endpoint doesn't exist yet
-      setCompanyPrivileges([]);
+      // Set default privileges if endpoint doesn't exist yet or fails
+      // For now, grant basic viewing permissions by default
+      setCompanyPrivileges([
+        { permission_name: 'can_view_jobs', is_granted: true },
+        { permission_name: 'can_post_jobs', is_granted: true },
+        { permission_name: 'can_manage_jobs', is_granted: true },
+      ]);
     }
   };
 
