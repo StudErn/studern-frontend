@@ -30,6 +30,9 @@ const JobBrowse = () => {
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
   const [filters, setFilters] = useState({
     hiring_type: 'all',
     work_from: 'all',
@@ -44,45 +47,62 @@ const JobBrowse = () => {
     applyFilters();
   }, [jobs, searchTerm, filters]);
 
-  const loadJobs = async () => {
-    const result = await browseJobs();
+  const loadJobs = async (searchFilters = {}, page = 1) => {
+    const apiFilters = {
+      ...filters,
+      ...searchFilters,
+      query: searchTerm || undefined,
+      page: page,
+      per_page: 12, // Show 12 jobs per page
+    };
+
+    // Remove 'all' values
+    Object.keys(apiFilters).forEach(key => {
+      if (apiFilters[key] === 'all') {
+        delete apiFilters[key];
+      }
+    });
+
+    const result = await browseJobs(apiFilters);
     if (result.success) {
-      setJobs(result.data);
+      // The API returns Laravel pagination structure
+      const paginationData = result.data;
+      setJobs(paginationData.data || []);
+      setCurrentPage(paginationData.current_page || 1);
+      setTotalPages(paginationData.last_page || 1);
+      setTotalResults(paginationData.total || 0);
     }
+  };
+
+  const handleSearch = () => {
+    loadJobs();
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    const newFilters = { ...filters, [filterType]: value };
+    setFilters(newFilters);
+    // Optionally load jobs immediately when filter changes
+    // loadJobs({ [filterType]: value === 'all' ? undefined : value });
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      hiring_type: 'all',
+      work_from: 'all',
+      employment_type: 'all',
+    });
+    setSearchTerm('');
+    loadJobs();
   };
 
   const applyFilters = () => {
-    let filtered = [...jobs];
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (job) =>
-          job.job_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.company?.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Type filters
-    if (filters.hiring_type !== 'all') {
-      filtered = filtered.filter((job) => job.hiring_type === filters.hiring_type);
-    }
-    if (filters.work_from !== 'all') {
-      filtered = filtered.filter((job) => job.work_from === filters.work_from);
-    }
-    if (filters.employment_type !== 'all') {
-      filtered = filtered.filter(
-        (job) => job.employment_type === filters.employment_type
-      );
-    }
-
-    setFilteredJobs(filtered);
+    // Since we're doing server-side filtering now, filteredJobs is just jobs
+    setFilteredJobs(jobs);
   };
 
   const formatSalary = (job) => {
-    if (job.hiring_type === 'job' && job.job_detail) {
-      const jobDetail = job.job_detail;
+    if (job.hiring_type === 'job' && job.job_details) {
+      const jobDetail = job.job_details;
       if (jobDetail.payment_type === 'fixed_pay') {
         if (jobDetail.min_salary && jobDetail.max_salary) {
           return `${jobDetail.currency} ${jobDetail.min_salary.toLocaleString()} - ${jobDetail.max_salary.toLocaleString()} / ${jobDetail.pay_per}`;
@@ -90,8 +110,8 @@ const JobBrowse = () => {
         return `${jobDetail.currency} ${jobDetail.min_salary?.toLocaleString() || 'N/A'} / ${jobDetail.pay_per}`;
       }
       return 'Performance based';
-    } else if (job.hiring_type === 'internship' && job.internship_detail) {
-      const intern = job.internship_detail;
+    } else if (job.hiring_type === 'internship' && job.internship_details) {
+      const intern = job.internship_details;
       if (intern.min_stipend && intern.max_stipend) {
         return `${intern.currency} ${intern.min_stipend.toLocaleString()} - ${intern.max_stipend.toLocaleString()} / ${intern.pay_per}`;
       } else if (intern.min_stipend) {
@@ -129,11 +149,15 @@ const JobBrowse = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               placeholder="Search jobs, companies, keywords..."
               className="w-full pl-10 pr-4 py-3 text-gray-900 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00B8D4]"
             />
           </div>
-          <button className="px-6 py-3 bg-[#00B8D4] text-white rounded-lg font-semibold hover:bg-[#0097a7] transition">
+          <button
+            onClick={handleSearch}
+            className="px-6 py-3 bg-[#00B8D4] text-white rounded-lg font-semibold hover:bg-[#0097a7] transition"
+          >
             Search
           </button>
         </div>
@@ -152,9 +176,7 @@ const JobBrowse = () => {
             </label>
             <select
               value={filters.hiring_type}
-              onChange={(e) =>
-                setFilters({ ...filters, hiring_type: e.target.value })
-              }
+              onChange={(e) => handleFilterChange('hiring_type', e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00B8D4] focus:border-transparent"
             >
               <option value="all">All Types</option>
@@ -169,9 +191,7 @@ const JobBrowse = () => {
             </label>
             <select
               value={filters.work_from}
-              onChange={(e) =>
-                setFilters({ ...filters, work_from: e.target.value })
-              }
+              onChange={(e) => handleFilterChange('work_from', e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00B8D4] focus:border-transparent"
             >
               <option value="all">All Arrangements</option>
@@ -187,9 +207,7 @@ const JobBrowse = () => {
             </label>
             <select
               value={filters.employment_type}
-              onChange={(e) =>
-                setFilters({ ...filters, employment_type: e.target.value })
-              }
+              onChange={(e) => handleFilterChange('employment_type', e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00B8D4] focus:border-transparent"
             >
               <option value="all">All Types</option>
@@ -201,12 +219,20 @@ const JobBrowse = () => {
             </select>
           </div>
         </div>
+        <div className="flex justify-end mt-4">
+          <button
+            onClick={clearAllFilters}
+            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+          >
+            Clear Filters
+          </button>
+        </div>
       </div>
 
       {/* Results Summary */}
       <div className="flex justify-between items-center mb-4">
         <p className="text-sm text-gray-600">
-          {filteredJobs.length} opportunity(ies) found
+          {totalResults} opportunity(ies) found
         </p>
       </div>
 
@@ -286,23 +312,23 @@ const JobBrowse = () => {
                     <Calendar className="w-4 h-4" />
                     Posted {new Date(job.posted_at).toLocaleDateString()}
                   </div>
-                  {job.hiring_type === 'job' && job.job_detail?.experience_year && (
+                  {job.hiring_type === 'job' && job.job_details?.experience_year && (
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      {job.job_detail.experience_year} year(s) experience
+                      {job.job_details.experience_year} year(s) experience
                     </div>
                   )}
                 </div>
 
                 {/* Perks Preview */}
-                {((job.hiring_type === 'job' && job.job_detail?.perks?.length > 0) ||
+                {((job.hiring_type === 'job' && job.job_details?.perks?.length > 0) ||
                   (job.hiring_type === 'internship' &&
-                    job.internship_detail?.perks?.length > 0)) && (
+                    job.internship_details?.perks?.length > 0)) && (
                   <div className="mt-4 pt-4 border-t">
                     <div className="flex flex-wrap gap-2">
                       {(job.hiring_type === 'job'
-                        ? job.job_detail.perks
-                        : job.internship_detail.perks
+                        ? job.job_details.perks
+                        : job.internship_details.perks
                       )
                         .slice(0, 3)
                         .map((perk, index) => (
@@ -314,13 +340,13 @@ const JobBrowse = () => {
                           </span>
                         ))}
                       {(job.hiring_type === 'job'
-                        ? job.job_detail.perks.length
-                        : job.internship_detail.perks.length) > 3 && (
+                        ? job.job_details.perks.length
+                        : job.internship_details.perks.length) > 3 && (
                         <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">
                           +
                           {(job.hiring_type === 'job'
-                            ? job.job_detail.perks.length
-                            : job.internship_detail.perks.length) - 3}{' '}
+                            ? job.job_details.perks.length
+                            : job.internship_details.perks.length) - 3}{' '}
                           more
                         </span>
                       )}
@@ -337,6 +363,47 @@ const JobBrowse = () => {
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-8">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => loadJobs({}, currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Previous
+            </button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const pageNum = Math.max(1, currentPage - 2) + i;
+              if (pageNum > totalPages) return null;
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => loadJobs({}, pageNum)}
+                  className={`px-3 py-2 text-sm border rounded-lg ${
+                    pageNum === currentPage
+                      ? 'bg-[#00B8D4] text-white border-[#00B8D4]'
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => loadJobs({}, currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
     </div>

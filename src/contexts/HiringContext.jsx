@@ -37,17 +37,29 @@ export const HiringProvider = ({ children }) => {
     }
   };
 
-  // Get company hiring details
-  const getCompanyHirings = async (companyId, filters = {}) => {
+  // Check if posting is free
+  const checkIfFreePosting = async (companyId) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE}/companies/${companyId}/check-free-posting`
+      );
+      return { success: true, isFree: response.data.is_free };
+    } catch (error) {
+      console.error('Error checking free posting:', error);
+      return { success: false, isFree: false };
+    }
+  };
+
+  // Get all company hirings
+  const getCompanyHirings = async (companyId) => {
     try {
       setLoading(true);
-      const params = new URLSearchParams(filters);
       const response = await axios.get(
-        `${API_BASE}/companies/${companyId}/hiring?${params}`
+        `${API_BASE}/companies/${companyId}/hiring`
       );
       return { success: true, data: response.data.data };
     } catch (error) {
-      console.error('Error fetching hirings:', error);
+      console.error('Error fetching company hirings:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to fetch postings',
@@ -121,7 +133,9 @@ export const HiringProvider = ({ children }) => {
       const params = new URLSearchParams(filters);
       // This would be a public endpoint to browse all active jobs
       const response = await axios.get(`${API_BASE}/hiring/browse?${params}`);
-      return { success: true, data: response.data.data };
+      // Handle pagination: if response.data.data has a 'data' property (Laravel Paginator), use it
+      const jobs = response.data.data?.data || response.data.data || [];
+      return { success: true, data: jobs };
     } catch (error) {
       console.error('Error browsing jobs:', error);
       return {
@@ -157,6 +171,7 @@ export const HiringProvider = ({ children }) => {
   const value = {
     loading,
     createHiring,
+    checkIfFreePosting,
     getCompanyHirings,
     getHiringDetail,
     updateHiring,

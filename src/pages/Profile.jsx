@@ -31,15 +31,16 @@ const Profile = () => {
     const fetchProfile = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('/api/profile');
-            setProfile(response.data.data.user);
+            const response = await axios.get('/profile');
+            const profileData = response.data.data || response.data;
+            setProfile(profileData.user);
             setEditForm({
-                firstname: response.data.data.user.firstname || '',
-                middlename: response.data.data.user.middlename || '',
-                lastname: response.data.data.user.lastname || '',
-                username: response.data.data.user.username || '',
-                date_of_birth: response.data.data.user.date_of_birth || '',
-                gender: response.data.data.user.gender || ''
+                firstname: profileData.user.firstname || '',
+                middlename: profileData.user.middlename || '',
+                lastname: profileData.user.lastname || '',
+                username: profileData.user.username || '',
+                date_of_birth: profileData.user.date_of_birth || '',
+                gender: profileData.user.gender || ''
             });
         } catch (error) {
             console.error('Error fetching profile:', error);

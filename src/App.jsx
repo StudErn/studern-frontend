@@ -5,6 +5,7 @@ import { CompanyProvider } from './contexts/CompanyContext'
 import { HiringProvider } from './contexts/HiringContext'
 import { ToastProvider } from './contexts/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import PostJobRedirect from './components/PostJobRedirect'
 import AppLayout from './components/AppLayout'
 import RootPage from './pages/RootPage'
 import FindJobs from './pages/FindJobs'
@@ -19,8 +20,7 @@ import InternshipSprintPage from './pages/InternshipSprintPage'
 import JobFairPage from './pages/JobFairPage'
 import BookSession from './pages/BookSession'
 import CreateCompany from './pages/CreateCompany'
-import PostJob from './components/hiring/CreateHiring'
-import CompanyDashboard from './pages/CompanyDashboard'
+import Dashboard from './pages/Dashboard'
 import CompanyDashboardPage from './pages/CompanyDashboardPage'
 import CompanyOverview from './pages/CompanyOverview'
 import DashboardJobs from './pages/DashboardJobs'
@@ -36,6 +36,11 @@ import Applications from './pages/Applications'
 import Interviews from './pages/Interviews'
 import SavedJobs from './pages/SavedJobs'
 import Profile from './pages/Profile'
+import Settings from './pages/Settings'
+import ApplicantFindJobs from './pages/ApplicantFindJobs'
+import ApplicantJobDetails from './pages/ApplicantJobDetails'
+import ApplicantJobs from './pages/ApplicantJobs'
+import ApplicantInternships from './pages/ApplicantInternships'
 
 function App() {
   return (
@@ -51,6 +56,9 @@ function App() {
                   <Route path="/" element={<RootPage />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
+                  <Route path="/find-jobs" element={<FindJobs />} />
+                  <Route path="/jobs" element={<JobBrowse />} />
+                  <Route path="/jobs/:id" element={<JobDetails />} />
                   <Route path="/verify-contact" element={<VerifyContact />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
@@ -59,80 +67,49 @@ function App() {
                   <Route path="/job-fair" element={<JobFairPage />} />
                   <Route path="/book-session" element={<BookSession />} />
                   
-                  {/* Job Browsing Routes - Redirect to dashboard if logged in */}
-                  <Route path="/find-jobs" element={<FindJobs />} />
-                  <Route path="/jobs" element={<JobBrowse />} />
-                  <Route path="/jobs/:id" element={<JobDetails />} />
-                  <Route path="/applications" element={
-                    <ProtectedRoute>
-                      <Applications />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/saved-jobs" element={
-                    <ProtectedRoute>
-                      <SavedJobs />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/interviews" element={
-                    <ProtectedRoute>
-                      <Interviews />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/profile" element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  } />
+                  {/* Post Job Route - redirects based on auth status */}
+                  <Route path="/post-job" element={<PostJobRedirect />} />
                   
-                  {/* Protected Dashboard Routes */}
-                  <Route path="/dashboard" element={
+                  {/* Protected User Routes - Wrapped in AppLayout */}
+                  <Route element={
                     <ProtectedRoute>
                       <AppLayout />
                     </ProtectedRoute>
                   }>
-                    <Route index element={<CompanyDashboardPage />} />
-                    <Route path="jobs" element={<DashboardJobs />} />
-                    <Route path="jobs/create" element={<CreateHiring />} />
-                    <Route path="members" element={<MemberManagement />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard/find-jobs" element={<ApplicantFindJobs />} />
+                    <Route path="/dashboard/find-jobs/jobs" element={<ApplicantJobs />} />
+                    <Route path="/dashboard/find-jobs/internships" element={<ApplicantInternships />} />
+                    <Route path="/dashboard/find-jobs/:id" element={<ApplicantJobDetails />} />
+                    <Route path="/applications" element={<Applications />} />
+                    <Route path="/interviews" element={<Interviews />} />
+                    <Route path="/saved-jobs" element={<SavedJobs />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/settings" element={<Settings />} />
+                    
+                    {/* Recruiter Routes */}
+                    <Route path="/dashboard/jobs" element={<DashboardJobs />} />
+                    <Route path="/dashboard/jobs/create" element={<CreateHiring />} />
+                    <Route path="/dashboard/members" element={<MemberManagement />} />
+                  </Route>
+
+                  {/* Admin Routes - Control Panel */}
+                  <Route path="/control-panel" element={
+                    <ProtectedRoute checkRole="admin">
+                      <AppLayout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Dashboard />} />
+                    <Route path="users" element={<AdminUsers />} />
+                    <Route path="companies" element={<AdminCompanies />} />
+                    <Route path="hiring" element={<AdminHiring />} />
+                    <Route path="settings" element={<SystemSettings />} />
                   </Route>
                   
-                  {/* Company Routes */}
+                  {/* Company Creation */}
                   <Route path="/create-company" element={
                     <ProtectedRoute>
                       <CreateCompany />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/company/:companyId" element={<CompanyDashboard />}>
-                    <Route index element={<Navigate to="overview" replace />} />
-                    <Route path="overview" element={<CompanyOverview />} />
-                    <Route path="hiring" element={<HiringList />} />
-                    <Route path="hiring/create" element={<CreateHiring />} />
-                    <Route path="jobs/create" element={<CreateHiring />} />
-                    <Route path="post-job" element={<PostJob />} />
-                    <Route path="members" element={<MemberManagement />} />
-                  </Route>
-                  
-                  {/* System Settings Route - Only for system panel users */}
-                  <Route path="/system-settings" element={
-                    <ProtectedRoute>
-                      <SystemSettings />
-                    </ProtectedRoute>
-                  } />
-
-                  {/* Admin Routes - Only for system panel users */}
-                  <Route path="/admin/users" element={
-                    <ProtectedRoute>
-                      <AdminUsers />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/companies" element={
-                    <ProtectedRoute>
-                      <AdminCompanies />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/hiring" element={
-                    <ProtectedRoute>
-                      <AdminHiring />
                     </ProtectedRoute>
                   } />
                 </Routes>

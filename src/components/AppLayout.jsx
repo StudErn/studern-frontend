@@ -43,6 +43,20 @@ const AppLayout = () => {
   const getMenuItems = () => {
     if (!user) return [];
 
+    // Valid Icons map (since we pass string names, Sidebar needs to resolve them or we import them here)
+    // Assuming DashboardSidebar resolves strings or we should pass components.
+    // Looking at AppLayout code, it passes string names.
+
+    if (location.pathname.startsWith('/control-panel')) {
+        return [
+            { path: '/control-panel', label: 'Admin Dashboard', icon: 'LayoutDashboard' },
+            { path: '/control-panel/users', label: 'Manage Users', icon: 'Users' },
+            { path: '/control-panel/companies', label: 'Manage Companies', icon: 'Building' },
+            { path: '/control-panel/hiring', label: 'Hiring Management', icon: 'Briefcase' },
+            { path: '/control-panel/settings', label: 'Site Settings', icon: 'Settings' },
+        ];
+    }
+
     const baseItems = [
       { path: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
     ];
@@ -52,11 +66,12 @@ const AppLayout = () => {
     if (view === 'applicant') {
       return [
         ...baseItems,
-        { path: '/find-jobs', label: 'Find Jobs & Internships', icon: 'Search' },
-        { path: '/applications', label: 'Applications', icon: 'FileText' },
-        { path: '/saved-jobs', label: 'Saved Jobs', icon: 'Bookmark' },
-        { path: '/interviews', label: 'Interviews', icon: 'Calendar' },
-        { path: '/profile', label: 'Profile', icon: 'User' },
+        { path: '/dashboard/find-jobs/jobs', label: 'Find Jobs', icon: 'Briefcase' },
+        { path: '/dashboard/find-jobs/internships', label: 'Find Internships', icon: 'GraduationCap' },
+        { path: '/dashboard/applications', label: 'Applications', icon: 'FileText' },
+        { path: '/dashboard/saved-jobs', label: 'Saved Jobs', icon: 'Bookmark' },
+        { path: '/dashboard/interviews', label: 'Interviews', icon: 'Calendar' },
+        { path: '/dashboard/profile', label: 'Profile', icon: 'User' },
       ];
     } else if (view === 'recruiter') {
       return [

@@ -2,14 +2,20 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useView } from '../contexts/ViewContext'
 import { useCompany } from '../contexts/CompanyContext'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { Building2, Briefcase, Users, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react'
 
 const Dashboard = () => {
     const { selectedView } = useView()
+    const location = useLocation()
 
     const renderDashboardContent = () => {
+        // Force System Panel if routed via control-panel
+        if (location.pathname.startsWith('/control-panel')) {
+            return <SystemPanelDashboard />
+        }
+
         switch (selectedView) {
             case 'recruiter':
                 return <RecruiterDashboard />
@@ -48,9 +54,9 @@ const ApplicantDashboard = () => {
             setStats(prev => ({ ...prev, loading: true }))
 
             const [applicationsRes, interviewsRes, savedJobsRes] = await Promise.all([
-                axios.get(`${API_BASE}/applications`),
-                axios.get(`${API_BASE}/interviews`),
-                axios.get(`${API_BASE}/saved-jobs`)
+                axios.get(`/applications`),
+                axios.get(`/interviews`),
+                axios.get(`/saved-jobs`)
             ])
 
             const applications = applicationsRes.data.data?.applications || []
@@ -222,7 +228,7 @@ const ApplicantDashboard = () => {
                             <Briefcase className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                             <p className="mb-4">No applications yet</p>
                             <Link 
-                                to="/find-jobs"
+                                to="/dashboard/find-jobs"
                                 className="inline-block px-6 py-2.5 bg-[#1A3C40] text-white rounded-full font-bold text-sm hover:opacity-90 transition-opacity"
                             >
                                 Browse Jobs
@@ -260,7 +266,7 @@ const RecruiterDashboard = () => {
             // If a specific company is selected, fetch stats for that company
             if (selectedCompany) {
                 const [hiringResponse] = await Promise.all([
-                    axios.get(`/api/companies/${selectedCompany.id}/hiring`)
+                    axios.get(`/companies/${selectedCompany.id}/hiring`)
                 ])
 
                 const hirings = hiringResponse.data.data || []
@@ -450,7 +456,7 @@ const RecruiterDashboard = () => {
                                     <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                                     <p className="mb-4">No jobs posted yet</p>
                                     <Link
-                                        to={selectedCompany ? `/company/${selectedCompany.id}/post-job` : '/create-company'}
+                                        to={selectedCompany ? '/dashboard/jobs/create' : '/create-company'}
                                         className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white rounded-lg font-semibold hover:shadow-lg transition"
                                     >
                                         <Briefcase className="w-5 h-5" />
@@ -464,7 +470,7 @@ const RecruiterDashboard = () => {
                     {/* Quick Actions */}
                     <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                         <Link
-                            to={selectedCompany ? `/company/${selectedCompany.id}/post-job` : '/create-company'}
+                            to={selectedCompany ? '/dashboard/jobs/create' : '/create-company'}
                             className="bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-shadow"
                         >
                             <Briefcase className="w-8 h-8 mb-3" />

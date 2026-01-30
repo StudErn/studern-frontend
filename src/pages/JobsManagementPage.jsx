@@ -36,7 +36,7 @@ const JobsManagementPage = () => {
     const fetchJobs = async () => {
         try {
             setLoading(true)
-            const response = await axios.get(`${API_BASE}/companies/${company.id}/hiring`)
+            const response = await axios.get(`/companies/${company.id}/hiring`)
             setJobs(response.data.data || [])
         } catch (error) {
             console.error('Error fetching jobs:', error)

@@ -47,6 +47,14 @@ const MapPicker = ({ latitude, longitude, onLocationChange }) => {
   const [showResults, setShowResults] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
 
+  // Use ref to store the latest callback
+  const onLocationChangeRef = useRef(onLocationChange);
+
+  // Update ref when callback changes
+  useEffect(() => {
+    onLocationChangeRef.current = onLocationChange;
+  }, [onLocationChange]);
+
   // Initialize position from props
   useEffect(() => {
     if (latitude && longitude) {
@@ -60,9 +68,9 @@ const MapPicker = ({ latitude, longitude, onLocationChange }) => {
   // Update parent when position changes
   useEffect(() => {
     if (position) {
-      onLocationChange(position.lat, position.lng);
+      onLocationChangeRef.current(position.lat, position.lng);
     }
-  }, [position, onLocationChange]);
+  }, [position]);
 
   // Handle search using Nominatim API
   const handleSearch = async () => {

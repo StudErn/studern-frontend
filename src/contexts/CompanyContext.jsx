@@ -76,14 +76,21 @@ export const CompanyProvider = ({ children }) => {
       const response = await axios.get(`${API_BASE}/companies/${companyId}/my-privileges`);
       setCompanyPrivileges(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching company privileges:', error);
+      if (error.response?.status !== 403) {
+        console.error('Error fetching company privileges:', error);
+      }
       // Set default privileges if endpoint doesn't exist yet or fails
-      // For now, grant basic viewing permissions by default
-      setCompanyPrivileges([
-        { permission_name: 'can_view_jobs', is_granted: true },
-        { permission_name: 'can_post_jobs', is_granted: true },
-        { permission_name: 'can_manage_jobs', is_granted: true },
-      ]);
+      // For 403 (not a member), set empty privileges
+      if (error.response?.status === 403) {
+        setCompanyPrivileges([]);
+      } else {
+        // For other errors, grant basic viewing permissions by default
+        setCompanyPrivileges([
+          { permission_name: 'can_view_jobs', is_granted: true },
+          { permission_name: 'can_post_jobs', is_granted: true },
+          { permission_name: 'can_manage_jobs', is_granted: true },
+        ]);
+      }
     }
   };
 
@@ -146,15 +153,29 @@ export const CompanyProvider = ({ children }) => {
 
   // Initialize from localStorage
   useEffect(() => {
-    if (isAuthenticated) {
-      const savedCompany = localStorage.getItem('selectedCompany');
-      if (savedCompany) {
-        const company = JSON.parse(savedCompany);
-        setSelectedCompany(company);
-        fetchCompanyPrivileges(company.id);
+    const initializeCompanyContext = async () => {
+      if (isAuthenticated) {
+        // First fetch user companies
+        await fetchUserCompanies();
+        
+        // Then check if saved company is valid
+        const savedCompany = localStorage.getItem('selectedCompany');
+        if (savedCompany) {
+          const company = JSON.parse(savedCompany);
+          // Check if the saved company is in user's companies
+          const isValidCompany = companies.some(c => c.id === company.id);
+          if (isValidCompany) {
+            setSelectedCompany(company);
+            fetchCompanyPrivileges(company.id);
+          } else {
+            // Clear invalid saved company
+            localStorage.removeItem('selectedCompany');
+          }
+        }
       }
-      fetchUserCompanies();
-    }
+    };
+    
+    initializeCompanyContext();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 

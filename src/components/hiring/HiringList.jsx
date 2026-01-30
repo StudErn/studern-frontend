@@ -57,6 +57,11 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
   };
 
   const applyFilters = () => {
+    if (!Array.isArray(hirings)) {
+      setFilteredHirings([]);
+      return;
+    }
+
     let filtered = [...hirings];
 
     // Search filter
@@ -171,7 +176,7 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
         </div>
         {canPost && (
           <button
-            onClick={() => navigate(`/company/${effectiveCompany.id}/hiring/create`)}
+            onClick={() => navigate('/dashboard/jobs/create')}
             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-[1.02] transition"
           >
             <Plus className="w-5 h-5" />
@@ -253,7 +258,7 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
           </p>
           {canPost && (
             <button
-              onClick={() => navigate(`/company/${effectiveCompany.id}/hiring/create`)}
+              onClick={() => navigate('/dashboard/jobs/create')}
               className="px-6 py-3 bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-[1.02] transition"
             >
               Create Posting
@@ -341,7 +346,8 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-4 border-t">
-                  <button
+                  {/* TODO: Implement View Details route */}
+                  {/* <button
                     onClick={() =>
                       navigate(`/company/${effectiveCompany.id}/hiring/${hiring.id}`)
                     }
@@ -349,10 +355,11 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
                   >
                     <Eye className="w-4 h-4" />
                     View Details
-                  </button>
+                  </button> */}
                   {canManage && (
                     <>
-                      <button
+                      {/* TODO: Implement Edit route */}
+                      {/* <button
                         onClick={() =>
                           navigate(`/company/${effectiveCompany.id}/hiring/${hiring.id}/edit`)
                         }
@@ -360,7 +367,7 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
                       >
                         <Edit className="w-4 h-4" />
                         Edit
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => handleDelete(hiring.id)}
                         className="flex items-center gap-2 px-4 py-2 text-red-600 border-2 border-red-600 rounded-lg font-semibold hover:bg-red-600 hover:text-white transition ml-auto"

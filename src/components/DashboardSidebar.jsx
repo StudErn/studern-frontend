@@ -21,22 +21,22 @@ const DashboardSidebar = () => {
                 ]
             case 'system_panel':
                 return [
-                    { icon: '📊', label: 'Dashboard', path: '/' },
-                    { icon: '⚙️', label: 'Website Settings', path: '/system-settings' },
-                    { icon: '👥', label: 'User Management', path: '/admin/users' },
-                    { icon: '🏢', label: 'Company Management', path: '/admin/companies' },
-                    { icon: '📋', label: 'Hiring Management', path: '/admin/hiring' },
+                    { icon: '📊', label: 'Dashboard', path: '/control-panel' },
+                    { icon: '⚙️', label: 'Website Settings', path: '/control-panel/settings' },
+                    { icon: '👥', label: 'User Management', path: '/control-panel/users' },
+                    { icon: '🏢', label: 'Company Management', path: '/control-panel/companies' },
+                    { icon: '📋', label: 'Hiring Management', path: '/control-panel/hiring' },
                     { icon: '📊', label: 'System Logs', path: '/admin/logs' },
                     { icon: '👤', label: 'Profile', path: '/profile' },
                 ]
             default: // applicant
                 return [
                     { icon: '📊', label: 'Dashboard', path: '/' },
-                    { icon: '💼', label: 'Find Jobs', path: '/find-jobs' },
-                    { icon: '📝', label: 'My Applications', path: '/applications' },
-                    { icon: '⭐', label: 'Saved Jobs', path: '/saved-jobs' },
-                    { icon: '📅', label: 'Interviews', path: '/interviews' },
-                    { icon: '👤', label: 'Profile', path: '/profile' },
+                    { icon: '💼', label: 'Find Jobs', path: '/dashboard/find-jobs' },
+                    { icon: '📝', label: 'My Applications', path: '/dashboard/applications' },
+                    { icon: '⭐', label: 'Saved Jobs', path: '/dashboard/saved-jobs' },
+                    { icon: '📅', label: 'Interviews', path: '/dashboard/interviews' },
+                    { icon: '👤', label: 'Profile', path: '/dashboard/profile' },
                 ]
         }
     }

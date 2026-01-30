@@ -16,14 +16,28 @@ const CreateHiring = () => {
   const navigate = useNavigate();
   const { companyId: companyIdParam } = useParams();
   const { selectedCompany } = useCompany();
-  const { createHiring } = useHiring();
+  const { createHiring, checkIfFreePosting } = useHiring();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
   const [step, setStep] = useState(1);
+  const [isFree, setIsFree] = useState(true);
+  const [paymentPackages, setPaymentPackages] = useState([]);
 
   // Use companyId from URL params or fall back to selectedCompany
   const companyId = companyIdParam || selectedCompany?.id;
+
+  useEffect(() => {
+    const checkFree = async () => {
+      if (companyId) {
+        const result = await checkIfFreePosting(companyId);
+        if (result.success) {
+          setIsFree(result.isFree);
+        }
+      }
+    };
+    checkFree();
+  }, [companyId, checkIfFreePosting]);
 
   const [formData, setFormData] = useState({
     job_title: '',
@@ -67,6 +81,8 @@ const CreateHiring = () => {
       days_in_office_per_week: 3,
       only_from_office_location: false,
     },
+    // Payment
+    payment_package: '',
   });
 
   const [perkInput, setPerkInput] = useState('');
@@ -131,6 +147,8 @@ const CreateHiring = () => {
     setError('');
     setLoading(true);
 
+    console.log('Submitting job posting', { companyId, formData });
+
     // Build payload based on hiring type
     const payload = {
       company_id: parseInt(companyId),
@@ -176,11 +194,16 @@ const CreateHiring = () => {
       };
     }
 
+    console.log('Payload built', payload);
+    if (!isFree && formData.payment_package) {
+      payload.payment_package = formData.payment_package;
+    }
     const result = await createHiring(companyId, payload);
+    console.log('API result', result);
     setLoading(false);
 
     if (result.success) {
-      navigate(`/company/${companyId}/hiring`);
+      navigate('/dashboard/jobs');
     } else {
       setError(result.message);
       setErrors(result.errors || {});
@@ -213,7 +236,7 @@ const CreateHiring = () => {
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
         <button
-          onClick={() => navigate(`/company/${companyId}/hiring`)}
+          onClick={() => navigate('/dashboard/jobs')}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -743,11 +766,35 @@ const CreateHiring = () => {
             )}
           </div>
 
+          {/* Payment Details */}
+          {!isFree && (
+            <div className="space-y-6 border-t pt-6">
+              <h2 className="text-xl font-bold text-gray-900">Payment Package</h2>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Payment Package *
+                </label>
+                <select
+                  value={formData.payment_package}
+                  onChange={handleChange}
+                  name="payment_package"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00B8D4] focus:border-transparent"
+                >
+                  <option value="">Select a package</option>
+                  <option value="Basic">Basic - ৳3,850 (Job will be shown in basic form)</option>
+                  <option value="Standard">Standard - ৳4,500 (Enhanced visibility with better placement)</option>
+                  <option value="Premium">Premium - ৳5,300 (Top placement for 3 days)</option>
+                </select>
+              </div>
+            </div>
+          )}
+
           {/* Submit Buttons */}
           <div className="flex gap-4 pt-6 border-t">
             <button
               type="button"
-              onClick={() => navigate(`/company/${companyId}/hiring`)}
+              onClick={() => navigate('/dashboard/jobs')}
               className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
             >
               Cancel

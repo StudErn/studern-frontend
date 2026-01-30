@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCompany } from '../contexts/CompanyContext';
 import MapPicker from '../components/MapPicker';
@@ -23,13 +23,13 @@ const CreateCompany = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleLocationChange = (lat, lng) => {
+  const handleLocationChange = useCallback((lat, lng) => {
     setFormData((prev) => ({
       ...prev,
       address_lat: lat.toString(),
       address_lng: lng.toString(),
     }));
-  };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

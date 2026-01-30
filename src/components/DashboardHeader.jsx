@@ -3,8 +3,17 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import studernLogo from '../assets/StudErn Logo.png'
 
-const DashboardHeader = () => {
-    const { user, logout } = useAuth()
+const DashboardHeader = ({ 
+    user, // Changed to receive user from props/parent or keep useAuth
+    view,
+    companies = [],
+    selectedCompany,
+    onViewChange,
+    onCompanyChange
+}) => {
+    const { logout } = useAuth() // keep useAuth for logout but prefer props for user if passed
+    // If user is passed as prop, use it, else fallback (though parent passes it)
+    
     const [isProfileOpen, setIsProfileOpen] = useState(false)
 
     const handleLogout = () => {
@@ -39,6 +48,33 @@ const DashboardHeader = () => {
                             </svg>
                         </div>
                     </div>
+
+                    {/* View Switcher - Only visible if user has companies */}
+                    {companies && companies.length > 0 && (
+                        <div className="hidden md:flex items-center gap-3 mr-4">
+                            <select
+                                value={view}
+                                onChange={(e) => onViewChange(e.target.value)}
+                                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#00B8D4]"
+                            >
+                                <option value="applicant">Applicant View</option>
+                                <option value="recruiter">Company View</option>
+                            </select>
+
+                            {view === 'recruiter' && (
+                                <select
+                                    value={selectedCompany?.id || ''}
+                                    onChange={(e) => onCompanyChange(e.target.value)}
+                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#00B8D4]"
+                                >
+                                    <option value="" disabled>Select Company</option>
+                                    {companies.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+                    )}
 
                     {/* Right Section */}
                     <div className="flex items-center gap-4">
