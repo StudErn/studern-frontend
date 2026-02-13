@@ -1,13 +1,13 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useView } from '../contexts/ViewContext'
 
 const DashboardSidebar = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+    const { selectedView, changeView, sidebarOpen, setSidebarOpen, toggleSidebar } = useView()
     const location = useLocation()
     const { privileges } = useAuth()
-    const { selectedView, changeView } = useView()
+    
 
     const getMenuItems = () => {
         switch (selectedView) {
@@ -45,27 +45,19 @@ const DashboardSidebar = () => {
 
     return (
         <>
-            {/* Mobile Sidebar Toggle */}
-            <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="lg:hidden fixed bottom-6 right-6 z-50 bg-[#1A3C40] text-white p-4 rounded-full shadow-lg hover:bg-opacity-90"
-            >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
+            {/* Mobile sidebar toggle moved to header for authenticated users */}
 
             {/* Overlay for mobile */}
-            {isSidebarOpen && (
+            {sidebarOpen && (
                 <div
                     className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
-                    onClick={() => setIsSidebarOpen(false)}
+                    onClick={() => setSidebarOpen(false)}
                 />
             )}
 
             <aside
                 className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-100 z-40 transition-transform duration-300 ${
-                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+                    sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                 }`}
             >
                 <div className="flex flex-col h-full">
@@ -96,7 +88,7 @@ const DashboardSidebar = () => {
                                 <li key={index}>
                                     <Link
                                         to={item.path}
-                                        onClick={() => setIsSidebarOpen(false)}
+                                        onClick={() => setSidebarOpen(false)}
                                         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                                             location.pathname === item.path
                                                 ? 'bg-[#00B8D4] bg-opacity-10 text-[#ffffff] font-semibold'

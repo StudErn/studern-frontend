@@ -1,5 +1,6 @@
 import React from 'react'
 import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 const CoursesPage = () => {
     return (
@@ -16,6 +17,7 @@ const CoursesPage = () => {
                     <p className="text-gray-600">Listing coming soon...</p>
                 </div>
             </div>
+            <Footer />
         </div>
     )
 }

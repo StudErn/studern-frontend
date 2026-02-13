@@ -33,14 +33,18 @@ const Profile = () => {
             setLoading(true);
             const response = await axios.get('/profile');
             const profileData = response.data.data || response.data;
-            setProfile(profileData.user);
+            
+            // Handle different response structures
+            const userData = profileData.user || profileData;
+            
+            setProfile(userData);
             setEditForm({
-                firstname: profileData.user.firstname || '',
-                middlename: profileData.user.middlename || '',
-                lastname: profileData.user.lastname || '',
-                username: profileData.user.username || '',
-                date_of_birth: profileData.user.date_of_birth || '',
-                gender: profileData.user.gender || ''
+                firstname: userData.firstname || '',
+                middlename: userData.middlename || '',
+                lastname: userData.lastname || '',
+                username: userData.username || '',
+                date_of_birth: userData.date_of_birth ? new Date(userData.date_of_birth).toISOString().split('T')[0] : '',
+                gender: userData.gender || ''
             });
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -53,7 +57,7 @@ const Profile = () => {
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
         try {
-            await axios.put('/api/profile', editForm);
+            const response = await axios.put('/profile', editForm);
             toast.success('Profile updated successfully');
             setIsEditing(false);
             fetchProfile();
@@ -66,7 +70,7 @@ const Profile = () => {
     const handleChangePassword = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('/api/profile/change-password', passwordForm);
+            await axios.post('/profile/change-password', passwordForm);
             toast.success('Password changed successfully');
             setShowPasswordModal(false);
             setPasswordForm({
@@ -244,7 +248,6 @@ const Profile = () => {
                                             value={editForm.lastname}
                                             onChange={(e) => setEditForm({...editForm, lastname: e.target.value})}
                                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            required
                                         />
                                     </div>
                                     <div>

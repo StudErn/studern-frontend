@@ -5,15 +5,15 @@ import { useView } from '../contexts/ViewContext';
 import { useCompany } from '../contexts/CompanyContext';
 import DashboardHeader from './DashboardHeader';
 import DashboardSidebar from './DashboardSidebar';
+import Footer from './Footer';
 
 const AppLayout = () => {
   const { user } = useAuth();
-  const { selectedView, changeView } = useView();
+  const { selectedView, changeView, toggleSidebar } = useView();
   const { companies, selectedCompany, selectCompany } = useCompany();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleViewChange = (newView) => {
     changeView(newView);
@@ -95,7 +95,7 @@ const AppLayout = () => {
   const menuItems = getMenuItems();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <DashboardHeader
         user={user}
         view={selectedView}
@@ -103,21 +103,21 @@ const AppLayout = () => {
         selectedCompany={selectedCompany}
         onViewChange={handleViewChange}
         onCompanyChange={handleCompanyChange}
-        onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+        onMenuClick={toggleSidebar}
       />
       
-      <div className="flex">
+      <div className="flex flex-1">
         <DashboardSidebar
           menuItems={menuItems}
           isActivePath={isActivePath}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
         />
         
         <main className="flex-1 p-6">
           <Outlet />
         </main>
       </div>
+      
+      <Footer />
     </div>
   );
 };

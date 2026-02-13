@@ -40,7 +40,7 @@ const AdminCompanies = () => {
             if (searchTerm) params.append('search', searchTerm);
             if (statusFilter) params.append('status', statusFilter);
 
-            const response = await axios.get(`/api/admin/companies?${params}`);
+            const response = await axios.get(`/admin/companies?${params}`);
             setCompanies(response.data.data.companies);
             setPagination(response.data.data.pagination);
         } catch (error) {
@@ -69,7 +69,7 @@ const AdminCompanies = () => {
     const handleUpdateCompany = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`/api/admin/companies/${selectedCompany.id}`, editForm);
+            await axios.put(`/admin/companies/${selectedCompany.id}`, editForm);
             toast.success('Company updated successfully');
             setShowEditModal(false);
             fetchCompanies();
@@ -83,7 +83,7 @@ const AdminCompanies = () => {
         if (!window.confirm('Are you sure you want to delete this company? This action cannot be undone.')) return;
 
         try {
-            await axios.delete(`/api/admin/companies/${companyId}`);
+            await axios.delete(`/admin/companies/${companyId}`);
             toast.success('Company deleted successfully');
             fetchCompanies();
         } catch (error) {

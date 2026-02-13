@@ -269,31 +269,118 @@ const RecruiterDashboard = () => {
                     axios.get(`/companies/${selectedCompany.id}/hiring`)
                 ])
 
-                const hirings = hiringResponse.data.data || []
-                const now = new Date()
+                // Backend returns paginated data: response.data.data contains pagination object with 'data' array
+                const hiringsRaw = hiringResponse.data.data
+                let hirings = []
                 
+                // Handle paginated response structure
+                if (hiringsRaw && typeof hiringsRaw === 'object' && Array.isArray(hiringsRaw.data)) {
+                    // Paginated response: { current_page, data: [...], total, ... }
+                    hirings = hiringsRaw.data
+                } else if (Array.isArray(hiringsRaw)) {
+                    // Direct array response
+                    hirings = hiringsRaw
+                } else if (hiringsRaw && typeof hiringsRaw === 'object') {
+                    // Other object structures
+                    if (Array.isArray(hiringsRaw.hirings)) {
+                        hirings = hiringsRaw.hirings
+                    } else {
+                        hirings = Object.values(hiringsRaw).filter(v => v && typeof v === 'object')
+                    }
+                }
+
+                const now = new Date()
+
+                // Filter out any null entries and entries without a valid closing_at
+                const validHirings = hirings.filter(h => h && h.closing_at);
+
+                const openJobsCount = validHirings.filter(h => {
+                    const closing = new Date(h.closing_at);
+                    return !isNaN(closing) && closing > now;
+                }).length;
+
+                const closedJobsCount = validHirings.filter(h => {
+                    const closing = new Date(h.closing_at);
+                    return !isNaN(closing) && closing <= now;
+                }).length;
+
                 setStats({
                     totalCompanies: companies.length,
                     totalHirings: hirings.length,
-                    openJobs: hirings.filter(h => new Date(h.closing_at) > now).length,
-                    closedJobs: hirings.filter(h => new Date(h.closing_at) <= now).length,
+                    openJobs: openJobsCount,
+                    closedJobs: closedJobsCount,
                     totalApplications: 0, // Will be implemented when applications endpoint is ready
                     pendingApplications: 0,
                     loading: false
                 })
 
-                setRecentJobs(hirings.slice(0, 5))
+                setRecentJobs(validHirings.slice(0, 5))
             } else {
-                // Show aggregate stats for all companies
-                setStats({
-                    totalCompanies: companies.length,
-                    totalHirings: 0,
-                    openJobs: 0,
-                    closedJobs: 0,
-                    totalApplications: 0,
-                    pendingApplications: 0,
-                    loading: false
-                })
+                // Show aggregate stats for all companies the user has access to
+                if (companies.length === 0) {
+                    setStats({
+                        totalCompanies: 0,
+                        totalHirings: 0,
+                        openJobs: 0,
+                        closedJobs: 0,
+                        totalApplications: 0,
+                        pendingApplications: 0,
+                        loading: false
+                    })
+                } else {
+                    // Fetch hirings for all accessible companies in parallel
+                    const hiringPromises = companies.map(c => axios.get(`/companies/${c.id}/hiring`).catch(err => null));
+                    const responses = await Promise.all(hiringPromises);
+
+                    // Normalize and flatten hirings from all responses
+                    let allHirings = [];
+                    responses.forEach(res => {
+                        if (!res || !res.data) return;
+                        const hiringsRaw = res.data.data;
+                        if (!hiringsRaw) return;
+                        
+                        // Handle paginated response structure
+                        if (hiringsRaw && typeof hiringsRaw === 'object' && Array.isArray(hiringsRaw.data)) {
+                            // Paginated response: { current_page, data: [...], total, ... }
+                            allHirings = allHirings.concat(hiringsRaw.data);
+                        } else if (Array.isArray(hiringsRaw)) {
+                            // Direct array response
+                            allHirings = allHirings.concat(hiringsRaw);
+                        } else if (hiringsRaw && typeof hiringsRaw === 'object') {
+                            // Other object structures
+                            if (Array.isArray(hiringsRaw.hirings)) {
+                                allHirings = allHirings.concat(hiringsRaw.hirings);
+                            } else {
+                                allHirings = allHirings.concat(Object.values(hiringsRaw).filter(v => v && typeof v === 'object'));
+                            }
+                        }
+                    });
+
+                    const now = new Date();
+                    const validHirings = allHirings.filter(h => h && h.closing_at);
+
+                    const openJobsCount = validHirings.filter(h => {
+                        const closing = new Date(h.closing_at);
+                        return !isNaN(closing) && closing > now;
+                    }).length;
+
+                    const closedJobsCount = validHirings.filter(h => {
+                        const closing = new Date(h.closing_at);
+                        return !isNaN(closing) && closing <= now;
+                    }).length;
+
+                    setStats({
+                        totalCompanies: companies.length,
+                        totalHirings: allHirings.length,
+                        openJobs: openJobsCount,
+                        closedJobs: closedJobsCount,
+                        totalApplications: 0,
+                        pendingApplications: 0,
+                        loading: false
+                    })
+
+                    setRecentJobs(validHirings.slice(0, 5))
+                }
             }
         } catch (error) {
             console.error('Error fetching recruiter stats:', error)

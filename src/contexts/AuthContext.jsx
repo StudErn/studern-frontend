@@ -24,6 +24,9 @@ export const AuthProvider = ({ children }) => {
   // API base URL - adjust if needed
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'; // Assuming backend runs on 8000
 
+  // Set axios default base URL
+  axios.defaults.baseURL = API_BASE;
+
   useEffect(() => {
     // Check for stored auth data on app load
     const storedToken = localStorage.getItem('token');

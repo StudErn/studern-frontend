@@ -114,7 +114,7 @@ const MapPicker = ({ latitude, longitude, onLocationChange }) => {
   return (
     <div className="space-y-4">
       {/* Search Bar */}
-      <div className="relative">
+      <div className="relative z-50">
         <div className="flex gap-2">
           <input
             type="text"
@@ -141,7 +141,7 @@ const MapPicker = ({ latitude, longitude, onLocationChange }) => {
 
         {/* Search Results Dropdown */}
         {showResults && searchResults.length > 0 && (
-          <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+          <div className="absolute z-[9999] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
             {searchResults.map((result, index) => (
               <button
                 key={index}
@@ -162,14 +162,14 @@ const MapPicker = ({ latitude, longitude, onLocationChange }) => {
         )}
 
         {showResults && searchResults.length === 0 && !searching && (
-          <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4">
+          <div className="absolute z-[9999] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4">
             <p className="text-sm text-gray-500">No results found. Try a different search.</p>
           </div>
         )}
       </div>
 
       {/* Map Container */}
-      <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
+      <div className="relative z-10 border-2 border-gray-300 rounded-lg overflow-hidden">
         <MapContainer
           center={position || { lat: 23.8103, lng: 90.4125 }}
           zoom={12}

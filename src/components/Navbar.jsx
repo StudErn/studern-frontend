@@ -1,12 +1,18 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useView } from '../contexts/ViewContext'
 import studernLogo from '../assets/StudErn Logo.png'
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const { user, logout, isAuthenticated } = useAuth();
+    const { toggleSidebar, sidebarOpen } = useView();
+    const location = useLocation();
+
+    const isDashboardPath = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/control-panel');
+    const isOpenState = isMenuOpen || (isAuthenticated && sidebarOpen && isDashboardPath);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -122,10 +128,20 @@ const Navbar = () => {
                 </div>
 
                 {/* Hamburger Menu Toggle (Mobile) */}
-                <button className="flex flex-col gap-1.5 cursor-pointer lg:hidden z-50 p-2" onClick={toggleMenu}>
-                    <span className={`w-6 h-0.5 bg-[#1A3C40] rounded-sm transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-                    <span className={`w-6 h-0.5 bg-[#1A3C40] rounded-sm transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
-                    <span className={`w-6 h-0.5 bg-[#1A3C40] rounded-sm transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+                <button
+                    className="flex flex-col gap-1.5 cursor-pointer lg:hidden z-50 p-2"
+                    onClick={() => {
+                        // If authenticated and within dashboard/control-panel, toggle sidebar instead
+                        if (isAuthenticated && (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/control-panel'))) {
+                            toggleSidebar();
+                        } else {
+                            toggleMenu();
+                        }
+                    }}
+                >
+                    <span className={`w-6 h-0.5 bg-[#1A3C40] rounded-sm transition-all duration-300 ${isOpenState ? 'rotate-45 translate-y-2' : ''}`}></span>
+                    <span className={`w-6 h-0.5 bg-[#1A3C40] rounded-sm transition-all duration-300 ${isOpenState ? 'opacity-0' : ''}`}></span>
+                    <span className={`w-6 h-0.5 bg-[#1A3C40] rounded-sm transition-all duration-300 ${isOpenState ? '-rotate-45 -translate-y-2' : ''}`}></span>
                 </button>
 
                 {/* Mobile Menu Overlay */}

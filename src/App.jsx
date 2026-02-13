@@ -81,11 +81,15 @@ function App() {
                     <Route path="/dashboard/find-jobs/jobs" element={<ApplicantJobs />} />
                     <Route path="/dashboard/find-jobs/internships" element={<ApplicantInternships />} />
                     <Route path="/dashboard/find-jobs/:id" element={<ApplicantJobDetails />} />
-                    <Route path="/applications" element={<Applications />} />
-                    <Route path="/interviews" element={<Interviews />} />
-                    <Route path="/saved-jobs" element={<SavedJobs />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/dashboard/applications" element={<Applications />} />
+                    <Route path="/dashboard/interviews" element={<Interviews />} />
+                    <Route path="/dashboard/saved-jobs" element={<SavedJobs />} />
+                    <Route path="/dashboard/profile" element={<Profile />} />
+                    <Route path="/dashboard/settings" element={<Settings />} />
+
+                    {/* Backwards-compatible redirects for legacy routes */}
+                    <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
+                    <Route path="/settings" element={<Navigate to="/dashboard/settings" replace />} />
                     
                     {/* Recruiter Routes */}
                     <Route path="/dashboard/jobs" element={<DashboardJobs />} />

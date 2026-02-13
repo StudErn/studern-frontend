@@ -28,9 +28,12 @@ export const CompanyProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE}/companies/my`);
-      setCompanies(response.data.data || []);
+      const data = response.data.data || [];
+      setCompanies(data);
+      return data;
     } catch (error) {
       console.error('Error fetching companies:', error);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -155,15 +158,15 @@ export const CompanyProvider = ({ children }) => {
   useEffect(() => {
     const initializeCompanyContext = async () => {
       if (isAuthenticated) {
-        // First fetch user companies
-        await fetchUserCompanies();
-        
+        // First fetch user companies and get the fresh list
+        const fetched = await fetchUserCompanies();
+
         // Then check if saved company is valid
         const savedCompany = localStorage.getItem('selectedCompany');
         if (savedCompany) {
           const company = JSON.parse(savedCompany);
           // Check if the saved company is in user's companies
-          const isValidCompany = companies.some(c => c.id === company.id);
+          const isValidCompany = fetched.some(c => c.id === company.id);
           if (isValidCompany) {
             setSelectedCompany(company);
             fetchCompanyPrivileges(company.id);

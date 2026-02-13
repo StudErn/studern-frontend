@@ -23,7 +23,7 @@ const SavedJobs = () => {
             if (searchTerm) params.append('search', searchTerm);
             if (typeFilter) params.append('hiring_type', typeFilter);
 
-            const response = await axios.get(`/api/saved-jobs?${params}`);
+            const response = await axios.get(`/saved-jobs?${params}`);
             setSavedJobs(response.data.data.saved_jobs);
         } catch (error) {
             console.error('Error fetching saved jobs:', error);
@@ -36,7 +36,7 @@ const SavedJobs = () => {
     const handleRemove = async (id) => {
         if (!window.confirm('Remove this job from saved list?')) return;
         try {
-            await axios.delete(`/api/saved-jobs/${id}`);
+            await axios.delete(`/saved-jobs/${id}`);
             toast.success('Job removed from saved list');
             fetchSavedJobs();
         } catch (error) {

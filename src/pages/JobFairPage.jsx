@@ -1,5 +1,6 @@
 import React from 'react'
 import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 const JobFairPage = () => {
     return (
@@ -16,6 +17,7 @@ const JobFairPage = () => {
                     <p className="text-gray-600">Registration form coming soon...</p>
                 </div>
             </div>
+            <Footer />
         </div>
     )
 }

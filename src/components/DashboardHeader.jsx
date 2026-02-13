@@ -9,7 +9,8 @@ const DashboardHeader = ({
     companies = [],
     selectedCompany,
     onViewChange,
-    onCompanyChange
+    onCompanyChange,
+    onMenuClick
 }) => {
     const { logout } = useAuth() // keep useAuth for logout but prefer props for user if passed
     // If user is passed as prop, use it, else fallback (though parent passes it)
@@ -25,10 +26,17 @@ const DashboardHeader = ({
         <header className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
             <div className="px-6 py-4">
                 <div className="flex items-center justify-between">
-                    {/* Logo */}
-                    <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-                        <img src={studernLogo} alt="StudErn Logo" className="h-8 w-auto object-contain" />
-                    </Link>
+                    {/* Logo / Mobile menu toggle */}
+                    <div className="flex items-center gap-2">
+                        <button className="lg:hidden mr-2 p-2" onClick={() => onMenuClick && onMenuClick()}>
+                            <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                        <Link to="/" className="flex items-center hover:opacity-90 transition-opacity">
+                            <img src={studernLogo} alt="StudErn Logo" className="h-8 w-auto object-contain" />
+                        </Link>
+                    </div>
 
                     {/* Search Bar - Desktop */}
                     <div className="hidden md:flex flex-1 max-w-xl mx-8">

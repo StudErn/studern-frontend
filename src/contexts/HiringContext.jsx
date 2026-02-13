@@ -40,10 +40,11 @@ export const HiringProvider = ({ children }) => {
   // Check if posting is free
   const checkIfFreePosting = async (companyId) => {
     try {
-      const response = await axios.get(
-        `${API_BASE}/companies/${companyId}/check-free-posting`
-      );
-      return { success: true, isFree: response.data.is_free };
+      // Backend route: /companies/{companyId}/hiring/check-free-posting
+      const response = await axios.get(`${API_BASE}/companies/${companyId}/hiring/check-free-posting`);
+      // response.data.data.is_free is the Laravel ApiResponse format
+      const isFree = response.data?.data?.is_free ?? response.data?.is_free ?? false;
+      return { success: true, isFree };
     } catch (error) {
       console.error('Error checking free posting:', error);
       return { success: false, isFree: false };

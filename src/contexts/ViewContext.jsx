@@ -12,6 +12,7 @@ export const useView = () => {
 
 export const ViewProvider = ({ children }) => {
   const [selectedView, setSelectedView] = useState('applicant'); // Default to applicant view
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Load selected view from localStorage on mount
   useEffect(() => {
@@ -30,9 +31,14 @@ export const ViewProvider = ({ children }) => {
     setSelectedView(view);
   };
 
+  const toggleSidebar = () => setSidebarOpen((s) => !s);
+
   const value = {
     selectedView,
     changeView,
+    sidebarOpen,
+    setSidebarOpen,
+    toggleSidebar,
   };
 
   return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

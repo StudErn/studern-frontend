@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useHiring } from '../../contexts/HiringContext';
 import { useCompany } from '../../contexts/CompanyContext';
 import {
@@ -10,12 +10,14 @@ import {
   Calendar,
   Users,
   ArrowLeft,
+  Building2,
+  AlertCircle,
 } from 'lucide-react';
 
 const CreateHiring = () => {
   const navigate = useNavigate();
   const { companyId: companyIdParam } = useParams();
-  const { selectedCompany } = useCompany();
+  const { selectedCompany, companies, companyPrivileges, fetchUserCompanies, selectCompany } = useCompany();
   const { createHiring, checkIfFreePosting } = useHiring();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,9 +25,41 @@ const CreateHiring = () => {
   const [step, setStep] = useState(1);
   const [isFree, setIsFree] = useState(true);
   const [paymentPackages, setPaymentPackages] = useState([]);
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [hasPostJobPrivilege, setHasPostJobPrivilege] = useState(false);
 
   // Use companyId from URL params or fall back to selectedCompany
   const companyId = companyIdParam || selectedCompany?.id;
+
+  // Check if user has companies and posting privileges
+  useEffect(() => {
+    const checkAccess = async () => {
+      setCheckingAccess(true);
+      const fetched = await fetchUserCompanies();
+
+      // If URL includes companyId param, try to auto-select that company
+      if (companyIdParam && fetched && fetched.length > 0) {
+        const found = fetched.find(c => String(c.id) === String(companyIdParam));
+        if (found) selectCompany(found);
+      }
+
+      setCheckingAccess(false);
+    };
+    checkAccess();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Check if user has post job privilege for selected company
+  useEffect(() => {
+    if (companyPrivileges && companyPrivileges.length > 0) {
+      const canPost = companyPrivileges.some(
+        (priv) => priv.permission_name === 'can_post_jobs' && priv.is_granted
+      );
+      setHasPostJobPrivilege(canPost);
+    } else {
+      setHasPostJobPrivilege(false);
+    }
+  }, [companyPrivileges]);
 
   useEffect(() => {
     const checkFree = async () => {
@@ -215,18 +249,122 @@ const CreateHiring = () => {
       ? formData.job_details.perks
       : formData.internship_details.perks;
 
-  // Show loading state if no company is selected
-  if (!companyId) {
+  // Show loading state while checking access
+  if (checkingAccess) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-md p-8 text-center">
-          <p className="text-gray-600">Please select a company first.</p>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="mt-4 px-4 py-2 bg-[#00B8D4] text-white rounded-lg hover:bg-[#0097a7] transition"
-          >
-            Go to Dashboard
-          </button>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00B8D4] mx-auto"></div>
+          <p className="text-gray-600 mt-4">Checking access permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if user has no companies
+  if (!companies || companies.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-8">
+          <div className="text-center">
+            <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Company Found</h2>
+            <p className="text-gray-600 mb-6">
+              You need to create a company or be part of a company to post jobs.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/create-company"
+                className="px-6 py-3 bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white rounded-lg font-semibold hover:shadow-lg transition"
+              >
+                Create Company
+              </Link>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no company is selected
+  if (!companyId) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-8">
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Select a Company</h2>
+            <p className="text-gray-600 mb-6">
+              Please select a company to post a job. You can also create a new company if needed.
+            </p>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Available Companies</label>
+              <div className="space-y-2">
+                {companies.map((company) => (
+                  <button
+                    key={company.id}
+                    onClick={() => {
+                      selectCompany(company);
+                    }}
+                    className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-[#00B8D4] hover:bg-[#00B8D4]/5 transition text-left"
+                  >
+                    <p className="font-semibold text-gray-900">{company.name || company.company_name || company.name}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/create-company"
+                className="px-6 py-3 bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white rounded-lg font-semibold hover:shadow-lg transition"
+              >
+                Create New Company
+              </Link>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if user doesn't have post job privilege
+  if (!hasPostJobPrivilege && companyPrivileges.length > 0) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-8">
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-gray-600 mb-6">
+              You don't have permission to post jobs for this company. Please contact your company administrator.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/create-company"
+                className="px-6 py-3 bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white rounded-lg font-semibold hover:shadow-lg transition"
+              >
+                Create Your Own Company
+              </Link>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
