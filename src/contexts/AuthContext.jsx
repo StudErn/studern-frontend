@@ -15,9 +15,17 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [privileges, setPrivileges] = useState({
+    system_privileges: [],
+    company_privileges: [],
+    available_views: []
+  });
 
   // API base URL - adjust if needed
-  const API_BASE = 'http://localhost:8000/api'; // Assuming backend runs on 8000
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'; // Assuming backend runs on 8000
+
+  // Set axios default base URL
+  axios.defaults.baseURL = API_BASE;
 
   useEffect(() => {
     // Check for stored auth data on app load
@@ -29,6 +37,9 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(storedUser));
       // Set axios default header
       axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      
+      // Fetch user privileges on app load if authenticated
+      fetchPrivileges();
     }
     setLoading(false);
 
@@ -82,12 +93,26 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData));
       axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
 
+      // Fetch user privileges after successful login
+      await fetchPrivileges();
+
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
+      
+      let errors = null;
+      if (error.response?.status === 422 && (error.response?.data?.errors || error.response?.data?.messages)) {
+        const errorData = error.response.data.errors || error.response.data.messages;
+        errors = {};
+        Object.keys(errorData).forEach(key => {
+          errors[key] = errorData[key][0]; // Get first error message
+        });
+      }
+      
       return {
         success: false,
         message: error.response?.data?.message || 'Login failed',
+        errors: errors,
       };
     }
   };
@@ -117,6 +142,11 @@ export const AuthProvider = ({ children }) => {
       // Ensure state is cleared
       setToken(null);
       setUser(null);
+      setPrivileges({
+        system_privileges: [],
+        company_privileges: [],
+        available_views: []
+      });
     }
   };
 
@@ -139,13 +169,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const fetchPrivileges = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/user/privileges`);
+      const privilegeData = response.data.data;
+      setPrivileges(privilegeData);
+      return { success: true, data: privilegeData };
+    } catch (error) {
+      console.error('Fetch privileges error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch privileges'
+      };
+    }
+  };
+
   const value = {
     user,
     token,
     loading,
+    privileges,
     login,
     logout,
     refreshToken,
+    fetchPrivileges,
     isAuthenticated: !!token,
   };
 

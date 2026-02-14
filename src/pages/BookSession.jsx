@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 const BookSession = () => {
     // State for filter popup
@@ -500,6 +501,7 @@ const BookSession = () => {
                     </div>
                 </div>
             )}
+            <Footer />
         </div>
     )
 }

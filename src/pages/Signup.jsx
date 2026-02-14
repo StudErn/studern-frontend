@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import signupImage from '../assets/signupimages.png'
+import { useToast } from '../contexts/ToastContext'
+import { Eye, EyeOff } from 'lucide-react'
 
 const Signup = () => {
     const [formData, setFormData] = useState({
@@ -15,24 +17,37 @@ const Signup = () => {
         confirm_password: '',
         gender: ''
     })
-    const [error, setError] = useState('')
+    const [fieldErrors, setFieldErrors] = useState({})
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
+    const toast = useToast()
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     const handleChange = (e) => {
+        const { name, value } = e.target
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: value
         })
+        // Clear field error when user starts typing
+        if (fieldErrors[name]) {
+            setFieldErrors({
+                ...fieldErrors,
+                [name]: ''
+            })
+        }
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setError('')
+        setFieldErrors({})
         setLoading(true)
 
         if (formData.password !== formData.confirm_password) {
-            setError('Passwords do not match')
+            setFieldErrors({ confirm_password: 'Passwords do not match' })
+            toast.error('Passwords do not match')
             setLoading(false)
             return
         }
@@ -45,16 +60,38 @@ const Signup = () => {
                 ua: navigator.userAgent,
             }
 
-            const response = await axios.post('http://localhost:8000/api/register', {
+            await axios.post(`${API_BASE}/register`, {
                 ...formData,
                 devicePayload
             })
 
-            // Assuming registration is successful, redirect to login or auto-login
-            navigate('/login')
+            toast.success('Registration successful! Please verify your contact.')
+            setTimeout(() => {
+                navigate('/verify-contact', { state: { contact: formData.contact } })
+            }, 1500)
         } catch (error) {
             console.error('Signup error:', error)
-            setError(error.response?.data?.message || 'Registration failed')
+            
+            // Handle validation errors from Laravel
+            if (error.response?.status === 422 && (error.response?.data?.errors || error.response?.data?.messages)) {
+                const errors = error.response.data.errors || error.response.data.messages
+                const formattedErrors = {}
+                
+                // Map Laravel validation errors to form fields
+                Object.keys(errors).forEach(key => {
+                    formattedErrors[key] = errors[key][0] // Get first error message
+                })
+                
+                setFieldErrors(formattedErrors)
+                toast.error('Please fix the errors in the form')
+            } else if (error.response?.data?.message) {
+                // Handle general error message
+                toast.error(error.response.data.message)
+            } else if (error.message) {
+                toast.error(error.message)
+            } else {
+                toast.error('Registration failed. Please try again.')
+            }
         }
 
         setLoading(false)
@@ -63,7 +100,7 @@ const Signup = () => {
     return (
         <div className="min-h-screen flex flex-col bg-white p-4 md:p-8 font-sans">
             <div className="mb-4">
-                <button onClick={() => navigate(-1)} className="text-[#1A3C40] text-sm font-bold no-underline hover:underline">Go back</button>
+                <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="text-[#1A3C40] text-sm font-bold no-underline hover:underline">Go back</button>
             </div>
 
             <div className="flex flex-1 max-w-[1200px] mx-auto w-full items-center justify-between gap-8 lg:gap-16 flex-col md:flex-row">
@@ -71,12 +108,6 @@ const Signup = () => {
                 {/* Left Side Form */}
                 <div className="flex-1 max-w-[500px] w-full p-4">
                     <h1 className="text-[#1A3C40] text-3xl md:text-4xl font-bold mb-8">Create an account</h1>
-
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                            {error}
-                        </div>
-                    )}
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                         <div className="flex flex-col gap-2">
@@ -87,9 +118,16 @@ const Signup = () => {
                                 value={formData.firstname}
                                 onChange={handleChange}
                                 placeholder="John"
-                                className="w-full p-3.5 px-4 bg-white border border-gray-100 rounded-[10px] text-sm text-gray-800 focus:ring-1 focus:ring-[#00B8D4] focus:border-[#00B8D4] outline-none placeholder-gray-300 shadow-sm"
+                                className={`w-full p-3.5 px-4 bg-white border rounded-[10px] text-sm text-gray-800 focus:ring-1 outline-none placeholder-gray-300 shadow-sm ${
+                                    fieldErrors.firstname 
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        : 'border-gray-100 focus:ring-[#00B8D4] focus:border-[#00B8D4]'
+                                }`}
                                 required
                             />
+                            {fieldErrors.firstname && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.firstname}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -100,8 +138,15 @@ const Signup = () => {
                                 value={formData.middlename}
                                 onChange={handleChange}
                                 placeholder="Optional"
-                                className="w-full p-3.5 px-4 bg-white border border-gray-100 rounded-[10px] text-sm text-gray-800 focus:ring-1 focus:ring-[#00B8D4] focus:border-[#00B8D4] outline-none placeholder-gray-300 shadow-sm"
+                                className={`w-full p-3.5 px-4 bg-white border rounded-[10px] text-sm text-gray-800 focus:ring-1 outline-none placeholder-gray-300 shadow-sm ${
+                                    fieldErrors.middlename 
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        : 'border-gray-100 focus:ring-[#00B8D4] focus:border-[#00B8D4]'
+                                }`}
                             />
+                            {fieldErrors.middlename && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.middlename}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -112,9 +157,15 @@ const Signup = () => {
                                 value={formData.lastname}
                                 onChange={handleChange}
                                 placeholder="Doe"
-                                className="w-full p-3.5 px-4 bg-white border border-gray-100 rounded-[10px] text-sm text-gray-800 focus:ring-1 focus:ring-[#00B8D4] focus:border-[#00B8D4] outline-none placeholder-gray-300 shadow-sm"
-                                required
+                                className={`w-full p-3.5 px-4 bg-white border rounded-[10px] text-sm text-gray-800 focus:ring-1 outline-none placeholder-gray-300 shadow-sm ${
+                                    fieldErrors.lastname 
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        : 'border-gray-100 focus:ring-[#00B8D4] focus:border-[#00B8D4]'
+                                }`}
                             />
+                            {fieldErrors.lastname && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.lastname}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -125,9 +176,16 @@ const Signup = () => {
                                 value={formData.username}
                                 onChange={handleChange}
                                 placeholder="johndoe"
-                                className="w-full p-3.5 px-4 bg-white border border-gray-100 rounded-[10px] text-sm text-gray-800 focus:ring-1 focus:ring-[#00B8D4] focus:border-[#00B8D4] outline-none placeholder-gray-300 shadow-sm"
+                                className={`w-full p-3.5 px-4 bg-white border rounded-[10px] text-sm text-gray-800 focus:ring-1 outline-none placeholder-gray-300 shadow-sm ${
+                                    fieldErrors.username 
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        : 'border-gray-100 focus:ring-[#00B8D4] focus:border-[#00B8D4]'
+                                }`}
                                 required
                             />
+                            {fieldErrors.username && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.username}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -138,9 +196,16 @@ const Signup = () => {
                                 value={formData.contact}
                                 onChange={handleChange}
                                 placeholder="email@example.com or +1234567890"
-                                className="w-full p-3.5 px-4 bg-white border border-gray-100 rounded-[10px] text-sm text-gray-800 focus:ring-1 focus:ring-[#00B8D4] focus:border-[#00B8D4] outline-none placeholder-gray-300 shadow-sm"
+                                className={`w-full p-3.5 px-4 bg-white border rounded-[10px] text-sm text-gray-800 focus:ring-1 outline-none placeholder-gray-300 shadow-sm ${
+                                    fieldErrors.contact 
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        : 'border-gray-100 focus:ring-[#00B8D4] focus:border-[#00B8D4]'
+                                }`}
                                 required
                             />
+                            {fieldErrors.contact && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.contact}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -150,9 +215,16 @@ const Signup = () => {
                                 name="date_of_birth"
                                 value={formData.date_of_birth}
                                 onChange={handleChange}
-                                className="w-full p-3.5 px-4 bg-white border border-gray-100 rounded-[10px] text-sm text-gray-800 focus:ring-1 focus:ring-[#00B8D4] focus:border-[#00B8D4] outline-none shadow-sm"
+                                className={`w-full p-3.5 px-4 bg-white border rounded-[10px] text-sm text-gray-800 focus:ring-1 outline-none shadow-sm ${
+                                    fieldErrors.date_of_birth 
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        : 'border-gray-100 focus:ring-[#00B8D4] focus:border-[#00B8D4]'
+                                }`}
                                 required
                             />
+                            {fieldErrors.date_of_birth && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.date_of_birth}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -161,7 +233,11 @@ const Signup = () => {
                                 name="gender"
                                 value={formData.gender}
                                 onChange={handleChange}
-                                className="w-full p-3.5 px-4 bg-white border border-gray-100 rounded-[10px] text-sm text-gray-800 focus:ring-1 focus:ring-[#00B8D4] focus:border-[#00B8D4] outline-none shadow-sm"
+                                className={`w-full p-3.5 px-4 bg-white border rounded-[10px] text-sm text-gray-800 focus:ring-1 outline-none shadow-sm ${
+                                    fieldErrors.gender 
+                                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                        : 'border-gray-100 focus:ring-[#00B8D4] focus:border-[#00B8D4]'
+                                }`}
                                 required
                             >
                                 <option value="">Select Gender</option>
@@ -169,32 +245,67 @@ const Signup = () => {
                                 <option value="female">Female</option>
                                 <option value="other">Other</option>
                             </select>
+                            {fieldErrors.gender && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.gender}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
                             <label className="font-medium text-sm text-[#1F2040]">Password</label>
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="At least 8 characters"
-                                className="w-full p-3.5 px-4 bg-white border border-gray-100 rounded-[10px] text-sm text-gray-800 focus:ring-1 focus:ring-[#00B8D4] focus:border-[#00B8D4] outline-none placeholder-gray-300 shadow-sm"
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="At least 8 characters"
+                                    className={`w-full p-3.5 px-4 pr-12 bg-white border rounded-[10px] text-sm text-gray-800 focus:ring-1 outline-none placeholder-gray-300 shadow-sm ${
+                                        fieldErrors.password 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-100 focus:ring-[#00B8D4] focus:border-[#00B8D4]'
+                                    }`}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                            {fieldErrors.password && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.password}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
                             <label className="font-medium text-sm text-[#1F2040]">Confirm Password</label>
-                            <input
-                                type="password"
-                                name="confirm_password"
-                                value={formData.confirm_password}
-                                onChange={handleChange}
-                                placeholder="Re-type password"
-                                className="w-full p-3.5 px-4 bg-white border border-gray-100 rounded-[10px] text-sm text-gray-800 focus:ring-1 focus:ring-[#00B8D4] focus:border-[#00B8D4] outline-none placeholder-gray-300 shadow-sm"
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    name="confirm_password"
+                                    value={formData.confirm_password}
+                                    onChange={handleChange}
+                                    placeholder="Re-type password"
+                                    className={`w-full p-3.5 px-4 pr-12 bg-white border rounded-[10px] text-sm text-gray-800 focus:ring-1 outline-none placeholder-gray-300 shadow-sm ${
+                                        fieldErrors.confirm_password 
+                                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
+                                            : 'border-gray-100 focus:ring-[#00B8D4] focus:border-[#00B8D4]'
+                                    }`}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                >
+                                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                            {fieldErrors.confirm_password && (
+                                <p className="text-red-600 text-xs mt-1">{fieldErrors.confirm_password}</p>
+                            )}
                         </div>
 
                         <div className="mt-6">

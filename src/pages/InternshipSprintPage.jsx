@@ -1,5 +1,6 @@
 import React from 'react'
 import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 const InternshipSprintPage = () => {
     return (
@@ -16,6 +17,7 @@ const InternshipSprintPage = () => {
                     <p className="text-gray-600">Application forms loading...</p>
                 </div>
             </div>
+            <Footer />
         </div>
     )
 }

@@ -1,9 +1,10 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 const Footer = () => {
     return (
         <footer className="footer bg-[#C9D6DA] py-16 pb-8 text-[#1F2040]">
-            <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 max-w-5xl">
+            <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12 max-w-6xl">
                 <div>
                     <h3 className="text-2xl font-normal mb-6">About Us</h3>
                     <ul className="space-y-3">
@@ -19,7 +20,8 @@ const Footer = () => {
                     <h3 className="text-2xl font-normal mb-6">Job Seeker</h3>
                     <ul className="space-y-3">
                         <li><a href="#" className="text-base font-light hover:underline">Resume Build</a></li>
-                        <li><a href="#" className="text-base font-light hover:underline">My Account</a></li>
+                        <li><Link to="/dashboard" className="text-base font-light hover:underline">My Account</Link></li>
+                        <li><Link to="/find-jobs" className="text-base font-light hover:underline">Find Jobs</Link></li>
                         <li><a href="#" className="text-base font-light hover:underline">Pro Service</a></li>
                     </ul>
                 </div>
@@ -27,9 +29,20 @@ const Footer = () => {
                 <div>
                     <h3 className="text-2xl font-normal mb-6">Recruiter</h3>
                     <ul className="space-y-3">
-                        <li><a href="#" className="text-base font-light hover:underline">Create Account</a></li>
-                        <li><a href="#" className="text-base font-light hover:underline">Post a Job</a></li>
+                        <li><Link to="/signup" className="text-base font-light hover:underline">Create Account</Link></li>
+                        <li><Link to="/post-job" className="text-base font-light hover:underline">Post a Job</Link></li>
+                        <li><Link to="/create-company" className="text-base font-light hover:underline">Create Company</Link></li>
                         <li><a href="#" className="text-base font-light hover:underline">Get Interns</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 className="text-2xl font-normal mb-6">Quick Links</h3>
+                    <ul className="space-y-3">
+                        <li><Link to="/courses" className="text-base font-light hover:underline">E-Learning</Link></li>
+                        <li><Link to="/job-fair" className="text-base font-light hover:underline">Job Fair</Link></li>
+                        <li><Link to="/internship-sprint" className="text-base font-light hover:underline">Internship Sprint</Link></li>
+                        <li><Link to="/book-session" className="text-base font-light hover:underline">Book Session</Link></li>
                     </ul>
                 </div>
             </div>
