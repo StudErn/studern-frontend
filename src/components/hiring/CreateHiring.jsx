@@ -517,7 +517,7 @@ const CreateHiring = () => {
                   Posting Date *
                 </label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   name="posted_at"
                   value={formData.posted_at}
                   onChange={handleChange}
@@ -531,7 +531,7 @@ const CreateHiring = () => {
                   Closing Date *
                 </label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   name="closing_at"
                   value={formData.closing_at}
                   onChange={handleChange}

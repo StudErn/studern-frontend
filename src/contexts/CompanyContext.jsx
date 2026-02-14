@@ -18,6 +18,7 @@ export const CompanyProvider = ({ children }) => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [loading, setLoading] = useState(false);
   const [companyPrivileges, setCompanyPrivileges] = useState([]);
+  const [availablePrivileges, setAvailablePrivileges] = useState([]);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
@@ -97,6 +98,74 @@ export const CompanyProvider = ({ children }) => {
     }
   };
 
+  // Fetch available system privileges (admin endpoint). Falls back to defaults.
+  const fetchAvailablePrivileges = async () => {
+    // First check if user has system admin privileges
+    try {
+      const userPrivilegesResponse = await axios.get(`${API_BASE}/user/privileges`);
+      const userPrivileges = userPrivilegesResponse.data.data;
+      
+      const hasSystemAdmin = userPrivileges?.system_privileges && userPrivileges.system_privileges.some(p => {
+        return (p.privilege_code && p.privilege_code === 'manage_privileges_of_users') || p === 'manage_privileges_of_users';
+      });
+      
+      if (!hasSystemAdmin) {
+        // User is not a system admin, use fallback
+        const fallback = [
+          { code: 'admin', name: 'Administrator', description: 'Full administrative access' },
+          { code: 'can_manage_users', name: 'Manage Members', description: 'Invite and manage company members' },
+          { code: 'can_manage_permissions', name: 'Manage Privileges', description: 'Assign and revoke member privileges' },
+          { code: 'can_post_jobs', name: 'Post Jobs', description: 'Create new job postings' },
+          { code: 'can_manage_jobs', name: 'Manage Jobs', description: 'Edit and delete job postings' },
+          { code: 'can_view_jobs', name: 'View Jobs', description: 'View all job postings' },
+          { code: 'can_manage_company', name: 'Manage Company', description: 'Update company information' },
+        ];
+        setAvailablePrivileges(fallback);
+        return fallback;
+      }
+    } catch (error) {
+      // If we can't check privileges, assume not admin and use fallback
+      const fallback = [
+        { code: 'admin', name: 'Administrator', description: 'Full administrative access' },
+        { code: 'can_manage_users', name: 'Manage Members', description: 'Invite and manage company members' },
+        { code: 'can_manage_permissions', name: 'Manage Privileges', description: 'Assign and revoke member privileges' },
+        { code: 'can_post_jobs', name: 'Post Jobs', description: 'Create new job postings' },
+        { code: 'can_manage_jobs', name: 'Manage Jobs', description: 'Edit and delete job postings' },
+        { code: 'can_view_jobs', name: 'View Jobs', description: 'View all job postings' },
+        { code: 'can_manage_company', name: 'Manage Company', description: 'Update company information' },
+      ];
+      setAvailablePrivileges(fallback);
+      return fallback;
+    }
+
+    // User is a system admin, fetch from admin endpoint
+    try {
+      const response = await axios.get(`${API_BASE}/admin/privileges`);
+      const data = response.data.data || [];
+      // Normalize to { code, name, description }
+      const normalized = data.map((p) => ({
+        code: p.privilege_code || p.name || p.id,
+        name: p.name || p.privilege_code || p.id,
+        description: p.description || '',
+      }));
+      setAvailablePrivileges(normalized);
+      return normalized;
+    } catch (error) {
+      // Even for admins, if the endpoint fails, use fallback
+      const fallback = [
+        { code: 'admin', name: 'Administrator', description: 'Full administrative access' },
+        { code: 'can_manage_users', name: 'Manage Members', description: 'Invite and manage company members' },
+        { code: 'can_manage_permissions', name: 'Manage Privileges', description: 'Assign and revoke member privileges' },
+        { code: 'can_post_jobs', name: 'Post Jobs', description: 'Create new job postings' },
+        { code: 'can_manage_jobs', name: 'Manage Jobs', description: 'Edit and delete job postings' },
+        { code: 'can_view_jobs', name: 'View Jobs', description: 'View all job postings' },
+        { code: 'can_manage_company', name: 'Manage Company', description: 'Update company information' },
+      ];
+      setAvailablePrivileges(fallback);
+      return fallback;
+    }
+  };
+
   // Check if user has a specific privilege
   const hasPrivilege = (privilegeName) => {
     return companyPrivileges.some(
@@ -115,10 +184,13 @@ export const CompanyProvider = ({ children }) => {
       );
       return { success: true, data: response.data.data };
     } catch (error) {
-      console.error('Error adding user to company:', error);
+      console.error('Error adding user to company:', error.response?.data || error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to add user',
+        errors: error.response?.data?.messages || error.response?.data?.errors || {},
+        status: error.response?.status,
+        raw: error.response?.data,
       };
     }
   };
@@ -132,10 +204,13 @@ export const CompanyProvider = ({ children }) => {
       );
       return { success: true, data: response.data.data };
     } catch (error) {
-      console.error('Error managing privileges:', error);
+      console.error('Error managing privileges:', error.response?.data || error);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to manage privileges',
+        errors: error.response?.data?.messages || error.response?.data?.errors || {},
+        status: error.response?.status,
+        raw: error.response?.data,
       };
     }
   };
@@ -151,6 +226,37 @@ export const CompanyProvider = ({ children }) => {
         success: false,
         message: error.response?.data?.message || 'Failed to fetch users',
       };
+    }
+  };
+
+  // Update company details
+  const updateCompany = async (companyId, companyData) => {
+    try {
+      setLoading(true);
+      const response = await axios.put(`${API_BASE}/companies/${companyId}`, companyData);
+      const updated = response.data.data;
+
+      // Update companies list and selectedCompany if needed
+      setCompanies((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      const saved = localStorage.getItem('selectedCompany');
+      if (saved) {
+        const sc = JSON.parse(saved);
+        if (sc.id === updated.id) {
+          setSelectedCompany(updated);
+          localStorage.setItem('selectedCompany', JSON.stringify(updated));
+        }
+      }
+
+      return { success: true, data: updated };
+    } catch (error) {
+      console.error('Error updating company:', error.response?.data || error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to update company',
+        errors: error.response?.data?.errors || error.response?.data?.messages || {},
+      };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -187,13 +293,16 @@ export const CompanyProvider = ({ children }) => {
     selectedCompany,
     loading,
     companyPrivileges,
+    availablePrivileges,
     fetchUserCompanies,
     createCompany,
+    updateCompany,
     selectCompany,
     hasPrivilege,
     addUserToCompany,
     manageUserPrivileges,
     getCompanyUsers,
+    fetchAvailablePrivileges,
   };
 
   return <CompanyContext.Provider value={value}>{children}</CompanyContext.Provider>;

@@ -58,7 +58,9 @@ export const HiringProvider = ({ children }) => {
       const response = await axios.get(
         `${API_BASE}/companies/${companyId}/hiring`
       );
-      return { success: true, data: response.data.data };
+      // Normalize Laravel paginator shape: response.data.data may itself contain { data: [...] }
+      const hirings = response.data.data?.data || response.data.data || [];
+      return { success: true, data: hirings };
     } catch (error) {
       console.error('Error fetching company hirings:', error);
       return {
@@ -99,11 +101,13 @@ export const HiringProvider = ({ children }) => {
       );
       return { success: true, data: response.data.data };
     } catch (error) {
-      console.error('Error updating hiring:', error);
+      const responseData = error.response?.data;
+      console.error('Error updating hiring:', responseData || error);
       return {
         success: false,
-        message: error.response?.data?.message || 'Failed to update posting',
-        errors: error.response?.data?.errors || error.response?.data?.messages || {},
+        message: responseData?.message || 'Failed to update posting',
+        errors: responseData?.errors || responseData?.messages || responseData?.data || {},
+        raw: responseData,
       };
     } finally {
       setLoading(false);

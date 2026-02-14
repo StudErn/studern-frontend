@@ -20,54 +20,42 @@ const MemberManagement = () => {
     manageUserPrivileges,
     hasPrivilege,
     loading,
+    selectedCompany,
+    availablePrivileges,
+    fetchAvailablePrivileges,
   } = useCompany();
   const [members, setMembers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [addUserEmail, setAddUserEmail] = useState('');
   const [addUserError, setAddUserError] = useState('');
+  const [addUserErrorRaw, setAddUserErrorRaw] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
   const [selectedPrivileges, setSelectedPrivileges] = useState([]);
+  const [privilegeError, setPrivilegeError] = useState('');
+  const [privilegeErrorRaw, setPrivilegeErrorRaw] = useState(null);
 
   const canAddMembers = hasPrivilege('can_add_members');
   const canManagePrivileges = hasPrivilege('can_manage_privileges');
 
-  const availablePrivileges = [
-    { code: 'can_post_jobs', name: 'Post Jobs', description: 'Create new job postings' },
-    {
-      code: 'can_manage_jobs',
-      name: 'Manage Jobs',
-      description: 'Edit and delete job postings',
-    },
-    { code: 'can_view_jobs', name: 'View Jobs', description: 'View all job postings' },
-    {
-      code: 'can_add_members',
-      name: 'Add Members',
-      description: 'Invite new members to company',
-    },
-    {
-      code: 'can_manage_privileges',
-      name: 'Manage Privileges',
-      description: 'Assign and revoke member privileges',
-    },
-    {
-      code: 'can_edit_company',
-      name: 'Edit Company',
-      description: 'Update company information',
-    },
-    {
-      code: 'can_delete_company',
-      name: 'Delete Company',
-      description: 'Delete the company (admin only)',
-    },
-  ];
+
 
   useEffect(() => {
     loadMembers();
-  }, [companyId]);
+  }, [companyId, selectedCompany?.id]);
+
+  // Ensure we have available privileges from backend
+  useEffect(() => {
+    if (!availablePrivileges || availablePrivileges.length === 0) {
+      fetchAvailablePrivileges();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availablePrivileges]);
 
   const loadMembers = async () => {
-    const result = await getCompanyUsers(companyId);
+    const effectiveCompanyId = companyId || selectedCompany?.id;
+    if (!effectiveCompanyId) return;
+    const result = await getCompanyUsers(effectiveCompanyId);
     if (result.success) {
       setMembers(result.data);
     }
@@ -75,18 +63,33 @@ const MemberManagement = () => {
 
   const handleAddMember = async () => {
     setAddUserError('');
-    if (!addUserEmail.trim()) {
+    const email = addUserEmail.trim();
+    if (!email) {
       setAddUserError('Email is required');
       return;
     }
 
-    const result = await addUserToCompany(companyId, addUserEmail);
+    const effectiveCompanyId = companyId || selectedCompany?.id;
+    if (!effectiveCompanyId) {
+      setAddUserError('No company selected');
+      return;
+    }
+
+    const result = await addUserToCompany(effectiveCompanyId, { email });
     if (result.success) {
       setShowAddModal(false);
       setAddUserEmail('');
+      setAddUserError('');
+      setAddUserErrorRaw(null);
       loadMembers();
     } else {
-      setAddUserError(result.message);
+      if (result.errors && Object.keys(result.errors).length > 0) {
+        const msgs = Object.values(result.errors).flat().join(' ');
+        setAddUserError(msgs || result.message);
+      } else {
+        setAddUserError(result.message);
+      }
+      setAddUserErrorRaw(result.raw || null);
     }
   };
 
@@ -98,16 +101,30 @@ const MemberManagement = () => {
   const handleSavePrivileges = async () => {
     if (!editingMember) return;
 
+    const effectiveCompanyId = companyId || selectedCompany?.id;
+    if (!effectiveCompanyId) return;
+
+    // Build payload expected by backend: array of { permission_name, is_granted }
+    const allPrivilegeCodes = availablePrivileges.map((p) => p.code);
+    const privilegesPayload = allPrivilegeCodes.map((code) => ({
+      permission_name: code,
+      is_granted: selectedPrivileges.includes(code),
+    }));
+
     const result = await manageUserPrivileges(
-      companyId,
+      effectiveCompanyId,
       editingMember.user_id,
-      selectedPrivileges
+      privilegesPayload
     );
 
     if (result.success) {
       setEditingMember(null);
       setSelectedPrivileges([]);
       loadMembers();
+    }
+    else {
+      setPrivilegeError(result.message || 'Failed to update privileges');
+      setPrivilegeErrorRaw(result.raw || null);
     }
   };
 
@@ -136,15 +153,26 @@ const MemberManagement = () => {
             Manage your company team and their permissions
           </p>
         </div>
-        {canAddMembers && (
+        <div className="flex items-center gap-3">
+          {canAddMembers && (
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => { setAddUserError(''); setAddUserErrorRaw(null); setShowAddModal(true); }}
             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-[1.02] transition"
           >
             <UserPlus className="w-5 h-5" />
             Add Member
           </button>
-        )}
+          )}
+
+          {hasPrivilege('can_edit_company') && companyId && (
+            <button
+              onClick={() => window.location.href = `/dashboard/company/${companyId}/edit`}
+              className="px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Edit Company
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Search */}
@@ -288,6 +316,7 @@ const MemberManagement = () => {
                   setShowAddModal(false);
                   setAddUserEmail('');
                   setAddUserError('');
+                  setAddUserErrorRaw(null);
                 }}
                 className="text-gray-400 hover:text-gray-600 transition"
               >
@@ -325,6 +354,7 @@ const MemberManagement = () => {
                     setShowAddModal(false);
                     setAddUserEmail('');
                     setAddUserError('');
+                    setAddUserErrorRaw(null);
                   }}
                   className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
                 >
@@ -382,6 +412,11 @@ const MemberManagement = () => {
                   </label>
                 ))}
               </div>
+              {privilegeError && (
+                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {privilegeError}
+                </div>
+              )}
               <div className="flex gap-3">
                 <button
                   onClick={() => {

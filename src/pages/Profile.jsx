@@ -33,10 +33,14 @@ const Profile = () => {
             setLoading(true);
             const response = await axios.get('/profile');
             const profileData = response.data.data || response.data;
-            
-            // Handle different response structures
+
+            // Handle different response structures and ensure companies are attached
             const userData = profileData.user || profileData;
-            
+            // If companies are returned at the top level, merge them into the user object
+            if (profileData.companies && (!userData.companies || userData.companies.length === 0)) {
+                userData.companies = profileData.companies;
+            }
+
             setProfile(userData);
             setEditForm({
                 firstname: userData.firstname || '',

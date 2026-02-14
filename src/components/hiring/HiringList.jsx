@@ -7,6 +7,7 @@ import {
   Plus,
   MapPin,
   Clock,
+  Calendar,
   DollarSign,
   Users,
   Edit,
@@ -358,16 +359,15 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
                   </button> */}
                   {canManage && (
                     <>
-                      {/* TODO: Implement Edit route */}
-                      {/* <button
+                      <button
                         onClick={() =>
-                          navigate(`/company/${effectiveCompany.id}/hiring/${hiring.id}/edit`)
+                          navigate(`/dashboard/jobs/${hiring.id}/edit`)
                         }
                         className="flex items-center gap-2 px-4 py-2 text-blue-600 border-2 border-blue-600 rounded-lg font-semibold hover:bg-blue-600 hover:text-white transition"
                       >
                         <Edit className="w-4 h-4" />
                         Edit
-                      </button> */}
+                      </button>
                       <button
                         onClick={() => handleDelete(hiring.id)}
                         className="flex items-center gap-2 px-4 py-2 text-red-600 border-2 border-red-600 rounded-lg font-semibold hover:bg-red-600 hover:text-white transition ml-auto"

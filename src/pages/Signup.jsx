@@ -162,7 +162,6 @@ const Signup = () => {
                                         ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
                                         : 'border-gray-100 focus:ring-[#00B8D4] focus:border-[#00B8D4]'
                                 }`}
-                                required
                             />
                             {fieldErrors.lastname && (
                                 <p className="text-red-600 text-xs mt-1">{fieldErrors.lastname}</p>

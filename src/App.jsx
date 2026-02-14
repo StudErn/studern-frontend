@@ -27,7 +27,9 @@ import DashboardJobs from './pages/DashboardJobs'
 import JobBrowse from './pages/JobBrowse'
 import CreateHiring from './components/hiring/CreateHiring'
 import HiringList from './components/hiring/HiringList'
+import EditHiring from './components/hiring/EditHiring'
 import MemberManagement from './components/company/MemberManagement'
+import EditCompany from './components/company/EditCompany'
 import SystemSettings from './pages/SystemSettings'
 import AdminUsers from './pages/AdminUsers'
 import AdminCompanies from './pages/AdminCompanies'
@@ -94,6 +96,8 @@ function App() {
                     {/* Recruiter Routes */}
                     <Route path="/dashboard/jobs" element={<DashboardJobs />} />
                     <Route path="/dashboard/jobs/create" element={<CreateHiring />} />
+                    <Route path="/dashboard/jobs/:id/edit" element={<EditHiring />} />
+                    <Route path="/dashboard/company/:companyId/edit" element={<EditCompany />} />
                     <Route path="/dashboard/members" element={<MemberManagement />} />
                   </Route>
 
