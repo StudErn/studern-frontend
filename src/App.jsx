@@ -47,6 +47,8 @@ import ApplicantInternships from './pages/ApplicantInternships'
 import CompanyApplicants from './pages/CompanyApplicants'
 import PaymentReturn from './pages/PaymentReturn'
 import GoogleAuthCallback from './pages/GoogleAuthCallback'
+import LinkedInAuthCallback from './pages/LinkedInAuthCallback'
+import GitHubAuthCallback from './pages/GitHubAuthCallback'
 
 function App() {
   return (
@@ -80,6 +82,12 @@ function App() {
 
                   {/* Google OAuth callback — backend redirects here after OAuth */}
                   <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+
+                  {/* LinkedIn OAuth callback — backend redirects here after OAuth */}
+                  <Route path="/auth/linkedin/callback" element={<LinkedInAuthCallback />} />
+
+                  {/* GitHub OAuth callback — backend redirects here after OAuth */}
+                  <Route path="/auth/github/callback" element={<GitHubAuthCallback />} />
                   
                   {/* Post Job Route - redirects based on auth status */}
                   <Route path="/post-job" element={<PostJobRedirect />} />

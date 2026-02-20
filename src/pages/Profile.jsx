@@ -309,14 +309,29 @@ const Profile = () => {
       if (raw.companies && (!userData.companies || userData.companies.length === 0)) {
         userData.companies = raw.companies;
       }
-      setProfile(userData);
+      // Normalize company and current company fields so the UI can display them reliably
+      const companies = (userData.companies || []).map(c => ({
+        ...c,
+        name: c.name || c.company_name || c.companyName || c.company || '',
+        role: c.role || (c.pivot && c.pivot.role) || c.company_role || '',
+      }));
+
+      const normalized = {
+        ...userData,
+        companies,
+        current_company_name: userData.current_company_name || userData.current_company || userData.company_name || userData.companyName || (companies[0] && companies[0].name) || null,
+        current_job_title: userData.current_job_title || userData.current_job || userData.job_title || null,
+      };
+
+      setProfile(normalized);
+      // Use normalized data for edit form as well
       setEditForm({
-        firstname: userData.firstname || '',
-        middlename: userData.middlename || '',
-        lastname: userData.lastname || '',
-        username: userData.username || '',
-        date_of_birth: userData.date_of_birth ? new Date(userData.date_of_birth).toISOString().split('T')[0] : '',
-        gender: userData.gender || '',
+        firstname: normalized.firstname || '',
+        middlename: normalized.middlename || '',
+        lastname: normalized.lastname || '',
+        username: normalized.username || '',
+        date_of_birth: normalized.date_of_birth ? new Date(normalized.date_of_birth).toISOString().split('T')[0] : '',
+        gender: normalized.gender || '',
       });
     } catch {
       showToast('Failed to load profile', 'error');
@@ -417,11 +432,11 @@ const Profile = () => {
             {!isEditing ? (
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{fullName || 'Your Name'}</h1>
-                {(profile?.current_job_title || profile?.current_company_name) && (
+                {(profile?.current_job_title || profile?.current_company_name || (profile?.companies && profile.companies.length > 0)) && (
                   <p className="text-gray-500 text-sm mt-0.5">
-                    {profile.current_job_title}
-                    {profile.current_job_title && profile.current_company_name ? ' · ' : ''}
-                    {profile.current_company_name}
+                    {profile.current_job_title || (profile.companies && profile.companies[0]?.role) || ''}
+                    {(profile.current_job_title || (profile.companies && profile.companies[0]?.role)) && (profile.current_company_name || (profile.companies && profile.companies[0]?.name)) ? ' · ' : ''}
+                    {profile.current_company_name || (profile.companies && profile.companies[0]?.name) || ''}
                   </p>
                 )}
                 <p className="text-xs text-gray-400 mt-1">@{profile?.username}</p>
