@@ -100,27 +100,27 @@ const JobBrowse = () => {
     setFilteredJobs(jobs);
   };
 
-  const formatSalary = (job) => {
-    if (job.hiring_type === 'job' && job.job_details) {
-      const jobDetail = job.job_details;
-      if (jobDetail.payment_type === 'fixed_pay') {
-        if (jobDetail.min_salary && jobDetail.max_salary) {
-          return `${jobDetail.currency} ${jobDetail.min_salary.toLocaleString()} - ${jobDetail.max_salary.toLocaleString()} / ${jobDetail.pay_per}`;
-        }
-        return `${jobDetail.currency} ${jobDetail.min_salary?.toLocaleString() || 'N/A'} / ${jobDetail.pay_per}`;
-      }
-      return 'Performance based';
-    } else if (job.hiring_type === 'internship' && job.internship_details) {
-      const intern = job.internship_details;
-      if (intern.min_stipend && intern.max_stipend) {
-        return `${intern.currency} ${intern.min_stipend.toLocaleString()} - ${intern.max_stipend.toLocaleString()} / ${intern.pay_per}`;
-      } else if (intern.min_stipend) {
-        return `${intern.currency} ${intern.min_stipend.toLocaleString()} / ${intern.pay_per}`;
-      }
-      return 'Unpaid / Learning Opportunity';
-    }
-    return 'Compensation not specified';
-  };
+  // const formatSalary = (job) => {
+  //   if (job.hiring_type === 'job' && job.job_details) {
+  //     const jobDetail = job.job_details;
+  //     if (jobDetail.payment_type === 'fixed_pay') {
+  //       if (jobDetail.min_salary && jobDetail.max_salary) {
+  //         return `${jobDetail.currency} ${jobDetail.min_salary.toLocaleString()} - ${jobDetail.max_salary.toLocaleString()} / ${jobDetail.pay_per}`;
+  //       }
+  //       return `${jobDetail.currency} ${jobDetail.min_salary?.toLocaleString() || 'N/A'} / ${jobDetail.pay_per}`;
+  //     }
+  //     return 'Performance based';
+  //   } else if (job.hiring_type === 'internship' && job.internship_details) {
+  //     const intern = job.internship_details;
+  //     if (intern.min_stipend && intern.max_stipend) {
+  //       return `${intern.currency} ${intern.min_stipend.toLocaleString()} - ${intern.max_stipend.toLocaleString()} / ${intern.pay_per}`;
+  //     } else if (intern.min_stipend) {
+  //       return `${intern.currency} ${intern.min_stipend.toLocaleString()} / ${intern.pay_per}`;
+  //     }
+  //     return 'Unpaid / Learning Opportunity';
+  //   }
+  //   return 'Compensation not specified';
+  // };
 
   const getDaysRemaining = (closingAt) => {
     const now = new Date();
@@ -133,6 +133,10 @@ const JobBrowse = () => {
     if (diffDays === 1) return '1 day left';
     return `${diffDays} days left`;
   };
+
+  // Helpers to support both singular and plural detail keys from API
+  const jobDetailFor = (job) => job.job_detail || job.job_details || job.jobDetails || null;
+  const internshipDetailFor = (job) => job.internship_detail || job.internship_details || job.internshipDetails || null;
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -271,19 +275,19 @@ const JobBrowse = () => {
                         </h3>
                         <div className="flex items-center gap-2 text-gray-600">
                           <Building2 className="w-4 h-4" />
-                          <span>{job.company?.name || 'Company'}</span>
+                           <span>{job.company?.name || job.company}</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
+                  {/* <div className="text-right">
                     <div className="text-lg font-bold text-[#00B8D4]">
                       {formatSalary(job)}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">
                       {getDaysRemaining(job.closing_at)}
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-4">
@@ -312,26 +316,24 @@ const JobBrowse = () => {
                     <Calendar className="w-4 h-4" />
                     Posted {new Date(job.posted_at).toLocaleDateString()}
                   </div>
-                  {job.hiring_type === 'job' && job.job_details?.experience_year && (
+                  {job.hiring_type === 'job' && jobDetailFor(job)?.experience_year && (
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      {job.job_details.experience_year} year(s) experience
+                      {jobDetailFor(job).experience_year} year(s) experience
                     </div>
                   )}
                 </div>
 
                 {/* Perks Preview */}
-                {((job.hiring_type === 'job' && job.job_details?.perks?.length > 0) ||
-                  (job.hiring_type === 'internship' &&
-                    job.internship_details?.perks?.length > 0)) && (
-                  <div className="mt-4 pt-4 border-t">
-                    <div className="flex flex-wrap gap-2">
-                      {(job.hiring_type === 'job'
-                        ? job.job_details.perks
-                        : job.internship_details.perks
-                      )
-                        .slice(0, 3)
-                        .map((perk, index) => (
+                {(() => {
+                  const jobDetail = jobDetailFor(job);
+                  const internshipDetail = internshipDetailFor(job);
+                  const perks = job.hiring_type === 'job' ? (jobDetail?.perks || []) : (internshipDetail?.perks || []);
+                  if (perks.length === 0) return null;
+                  return (
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="flex flex-wrap gap-2">
+                        {perks.slice(0, 3).map((perk, index) => (
                           <span
                             key={index}
                             className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium"
@@ -339,20 +341,15 @@ const JobBrowse = () => {
                             ✓ {perk}
                           </span>
                         ))}
-                      {(job.hiring_type === 'job'
-                        ? job.job_details.perks.length
-                        : job.internship_details.perks.length) > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">
-                          +
-                          {(job.hiring_type === 'job'
-                            ? job.job_details.perks.length
-                            : job.internship_details.perks.length) - 3}{' '}
-                          more
-                        </span>
-                      )}
+                        {perks.length > 3 && (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">
+                            +{perks.length - 3} more
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 <div className="mt-4 pt-4 border-t flex items-center justify-between">
                   <span className="text-[#00B8D4] font-semibold group-hover:underline">

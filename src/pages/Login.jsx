@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import axios from 'axios'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { getSafeReturnUrl } from '../utils/safeRedirect'
 import loginImage from '../assets/loginimages.png'
 import studernLogo from '../assets/StudErn Logo.png'
 import { Eye, EyeOff } from 'lucide-react'
@@ -13,8 +15,27 @@ const Login = () => {
     const [loading, setLoading] = useState(false)
     const { login } = useAuth()
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const toast = useToast()
     const [showPassword, setShowPassword] = useState(false)
+
+    // Backend base URL (same as what AuthContext uses)
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+
+    // Validated post-login destination — safe against open-redirect attacks
+    const returnTo = getSafeReturnUrl(searchParams.get('returnTo'))
+
+    /** Kick off the Google OAuth flow by navigating to the backend redirect URL */
+    const handleGoogleLogin = async () => {
+        try {
+            const response = await axios.get(`${API_BASE}/auth/google/redirect`)
+            const { url } = response.data.data
+            window.location.href = url
+        } catch (error) {
+            console.error('Google OAuth initiation failed:', error)
+            toast.error('Could not connect to Google. Please try again.')
+        }
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -26,7 +47,7 @@ const Login = () => {
         if (result.success) {
             toast.success('Login successful! Redirecting...')
             setTimeout(() => {
-                navigate('/')
+                navigate(returnTo, { replace: true })
             }, 1000)
         } else {
             toast.error(result.message || 'Login failed')
@@ -41,7 +62,7 @@ const Login = () => {
     return (
         <div className="min-h-screen flex flex-col bg-white p-4 md:p-8 font-sans">
             <div className="mb-4">
-                <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="text-[#1A3C40] text-sm font-bold no-underline hover:underline">Go back</button>
+                <button onClick={() => navigate('/')} className="text-[#1A3C40] text-sm font-bold no-underline hover:underline">Go back</button>
             </div>
 
             <div className="flex flex-1 max-w-[1200px] mx-auto w-full items-center justify-center gap-8 lg:gap-20 flex-col md:flex-row">
@@ -137,7 +158,10 @@ const Login = () => {
                     </div>
 
                     <div className="flex flex-col gap-4">
-                        <button className="w-full p-3.5 border border-gray-200 rounded-[15px] bg-white text-[#1F2040] font-bold text-sm flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer">
+                        <button
+                            type="button"
+                            onClick={handleGoogleLogin}
+                            className="w-full p-3.5 border border-gray-200 rounded-[15px] bg-white text-[#1F2040] font-bold text-sm flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer">
                             {/* Google Icon SVG */}
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />

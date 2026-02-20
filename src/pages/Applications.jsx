@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import { Link } from 'react-router-dom'
 import { Briefcase, Calendar, MapPin, Search } from 'lucide-react'
 
 const Applications = () => {
     const [applications, setApplications] = useState([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('all')
+    const [jobDetailsMap, setJobDetailsMap] = useState({})
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
@@ -16,7 +18,22 @@ const Applications = () => {
     const fetchApplications = async () => {
         try {
             const response = await axios.get(`/applications`)
-            setApplications(response.data.data?.applications || [])
+            const apps = response.data.data?.applications || []
+            setApplications(apps)
+            // Fetch hiring details for these applications to show description
+            const hiringIds = Array.from(new Set(apps.map(a => a.hiring?.id).filter(Boolean)))
+            if (hiringIds.length > 0) {
+                const promises = hiringIds.map(id => axios.get(`/hirings/${id}`).catch(() => null))
+                const results = await Promise.all(promises)
+                const map = {}
+                results.forEach((res, idx) => {
+                    const id = hiringIds[idx]
+                    if (res && res.data) {
+                        map[id] = res.data.data || res.data
+                    }
+                })
+                setJobDetailsMap(map)
+            }
         } catch (error) {
             console.error('Error fetching applications:', error)
         } finally {
@@ -108,6 +125,11 @@ const Applications = () => {
                                         <p className="font-medium text-gray-700 mb-2">
                                             {application.company?.name || 'Unknown Company'}
                                         </p>
+                                        {jobDetailsMap[application.hiring?.id]?.description && (
+                                            <p className="text-sm text-gray-500 mb-2 line-clamp-3">
+                                                {jobDetailsMap[application.hiring?.id].description}
+                                            </p>
+                                        )}
                                         <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                                             <span className="flex items-center gap-1">
                                                 <Briefcase className="w-4 h-4" />
@@ -129,9 +151,9 @@ const Applications = () => {
                                     <span className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${getStatusStyle(application.status)} capitalize`}>
                                         {application.status}
                                     </span>
-                                    <button className="text-[#00B8D4] font-medium text-sm hover:underline">
+                                    <Link to={`/dashboard/applications/${application.id}`} className="text-[#00B8D4] font-medium text-sm hover:underline">
                                         View Details
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         </div>

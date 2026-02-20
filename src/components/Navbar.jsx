@@ -38,7 +38,7 @@ const Navbar = () => {
                         Find Jobs
                         <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#00B8D4] group-hover:w-full transition-all"></span>
                     </Link>
-                    <Link to="/internships" className="hover:text-[#00B8D4] transition-colors relative group">
+                    <Link to="/find-internships" className="hover:text-[#00B8D4] transition-colors relative group">
                         Internships
                         <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#00B8D4] group-hover:w-full transition-all"></span>
                     </Link>
@@ -57,12 +57,12 @@ const Navbar = () => {
                     {isAuthenticated ? (
                         <>
                             {/* Notifications */}
-                            <button className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                            {/* <button className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors">
                                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                 </svg>
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-                            </button>
+                            </button> */}
 
                             {/* Profile Dropdown */}
                             <div className="relative">
@@ -148,7 +148,7 @@ const Navbar = () => {
                 <div className={`fixed inset-0 bg-white z-40 flex flex-col items-center justify-center gap-8 transition-transform duration-300 ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'} lg:hidden`}>
                     <ul className="flex flex-col items-center gap-6 font-semibold text-lg text-gray-800">
                         <li><Link to="/find-jobs" onClick={() => setIsMenuOpen(false)} className="hover:text-[#00B8D4]">Find Jobs</Link></li>
-                        <li><Link to="/internships" onClick={() => setIsMenuOpen(false)} className="hover:text-[#00B8D4]">Internships</Link></li>
+                        <li><Link to="/find-internships" onClick={() => setIsMenuOpen(false)} className="hover:text-[#00B8D4]">Internships</Link></li>
                         <li><Link to="/courses" onClick={() => setIsMenuOpen(false)} className="hover:text-[#00B8D4]">E-Learning</Link></li>
                         <li><Link to="/job-fair" onClick={() => setIsMenuOpen(false)} className="hover:text-[#00B8D4]">Job Fair</Link></li>
                     </ul>

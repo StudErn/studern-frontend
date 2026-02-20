@@ -184,12 +184,46 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * loginWithToken — used after social (e.g. Google) OAuth.
+   * The backend redirects the browser with a JWT; we call /api/auth/me
+   * to hydrate the user object, then store everything like a normal login.
+   */
+  const loginWithToken = async (token) => {
+    try {
+      // Set the authorization header before making the /auth/me call
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      const response = await axios.get(`${API_BASE}/auth/me`);
+      const userData = response.data.data.user;
+
+      setToken(token);
+      setUser(userData);
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Fetch privileges just like a normal login
+      await fetchPrivileges();
+
+      return { success: true };
+    } catch (error) {
+      // Clean up the header we prematurely set
+      delete axios.defaults.headers.common['Authorization'];
+      console.error('loginWithToken error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to authenticate with Google',
+      };
+    }
+  };
+
   const value = {
     user,
     token,
     loading,
     privileges,
     login,
+    loginWithToken,
     logout,
     refreshToken,
     fetchPrivileges,

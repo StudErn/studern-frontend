@@ -57,7 +57,9 @@ const ApplicantJobDetails = () => {
       const response = await axios.get(`/applications`);
       const applications = response.data.data?.applications || [];
       // Assuming 'hiring_id' relates application to job
-      const applied = applications.some(app => String(app.hiring_id) === String(id));
+      const applied = applications.some(app =>
+        String(app.hiring?.id) === String(id) || String(app.hiring_id) === String(id)
+      );
       setHasApplied(applied);
     } catch (error) {
       console.error('Error checking application status:', error);
@@ -68,7 +70,12 @@ const ApplicantJobDetails = () => {
     if (!user) return;
     try {
       setApplying(true);
-      await axios.post(`${API_BASE}/hirings/${id}/apply`); // Adjust endpoint
+      // Backend expects `hiring_detail_id` and `company_id`
+      const payload = {
+        hiring_detail_id: id,
+        company_id: job?.company?.id || (typeof job.company === 'number' ? job.company : undefined),
+      };
+      await axios.post(`${API_BASE}/applications`, payload);
       showToast('Application submitted successfully!', 'success');
       setHasApplied(true);
     } catch (error) {

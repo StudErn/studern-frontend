@@ -4,7 +4,9 @@ import { useView } from '../contexts/ViewContext'
 import { useCompany } from '../contexts/CompanyContext'
 import { Link, useLocation } from 'react-router-dom'
 import axios from 'axios'
-import { Building2, Briefcase, Users, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react'
+import { Building2, Briefcase, Users, CheckCircle, XCircle, Clock, TrendingUp, Edit, Trash2 } from 'lucide-react'
+import { useHiring } from '../contexts/HiringContext'
+import { useNavigate } from 'react-router-dom'
 
 const Dashboard = () => {
     const { selectedView } = useView()
@@ -79,7 +81,39 @@ const ApplicantDashboard = () => {
                 loading: false
             })
 
-            setRecentApplications(applications.slice(0, 5))
+            // Populate recent applications (limit 5)
+            let recent = applications.slice(0, 5)
+
+            // If any recent app is missing a company name, try to fetch hiring detail to extract company
+            const missingCompanyApps = recent.filter(a => !(a.company && (a.company.name || a.company.company_name || a.company.companyName)) && a.hiring && a.hiring.id)
+            if (missingCompanyApps.length > 0) {
+                try {
+                    const hiringIds = Array.from(new Set(missingCompanyApps.map(a => a.hiring.id)))
+                    const hires = await Promise.all(hiringIds.map(id => axios.get(`/hirings/${id}`).catch(() => null)))
+                    const hireMap = {}
+                    hires.forEach((res, idx) => {
+                        const id = hiringIds[idx]
+                        if (res && res.data && res.data.data) {
+                            hireMap[id] = res.data.data
+                        }
+                    })
+
+                    recent = recent.map(a => {
+                        if (!(a.company && (a.company.name || a.company.company_name || a.company.companyName)) && a.hiring && a.hiring.id) {
+                            const hd = hireMap[a.hiring.id]
+                            if (hd && hd.company) {
+                                a.company = a.company || {}
+                                a.company.name = hd.company.name || hd.company.company_name || a.company.name
+                            }
+                        }
+                        return a
+                    })
+                } catch (e) {
+                    // ignore and continue with whatever data we have
+                }
+            }
+
+            setRecentApplications(recent)
         } catch (error) {
             console.error('Error fetching applicant stats:', error)
             setStats(prev => ({ ...prev, loading: false }))
@@ -200,12 +234,20 @@ const ApplicantDashboard = () => {
                                                 />
                                             )}
                                             <div>
-                                                <h4 className="font-semibold text-gray-900">
-                                                    {application.hiring?.job_title}
-                                                </h4>
-                                                <p className="text-sm text-gray-600">
-                                                    {application.company?.name}
-                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-semibold text-gray-900">
+                                                        {application.hiring?.job_title}
+                                                    </h4>
+                                                    <span className="text-sm text-gray-400">at</span>
+                                                    <p className="text-sm text-gray-600 font-medium truncate max-w-[240px]">
+                                                        {application.company?.name || application.company?.company_name || application.company?.companyName || 'Company'}
+                                                    </p>
+                                                </div>
+                                                {application.hiring?.description && (
+                                                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                                                        {application.hiring.description}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -243,7 +285,11 @@ const ApplicantDashboard = () => {
 
 const RecruiterDashboard = () => {
     const { user } = useAuth()
-    const { companies, selectedCompany } = useCompany()
+    const { companies, selectedCompany, hasPrivilege } = useCompany()
+    const { deleteHiring } = useHiring()
+    const navigate = useNavigate()
+    const canManage = hasPrivilege('can_manage_jobs')
+    const canPost = hasPrivilege('can_post_jobs')
     const [stats, setStats] = useState({
         totalCompanies: 0,
         totalHirings: 0,
@@ -314,7 +360,20 @@ const RecruiterDashboard = () => {
                     loading: false
                 })
 
-                setRecentJobs(validHirings.slice(0, 5))
+                const top = validHirings.slice(0, 5)
+                // fetch application counts for recent jobs
+                try {
+                    const countPromises = top.map(h => axios.get(`/companies/${selectedCompany.id}/hiring/${h.id}/applications`, { params: { per_page: 1 } }).catch(() => null))
+                    const countResults = await Promise.all(countPromises)
+                    const topWithCounts = top.map((h, idx) => {
+                        const res = countResults[idx]
+                        const total = res && res.data && res.data.data && res.data.data.pagination ? res.data.data.pagination.total : (h.application_count || 0)
+                        return { ...h, application_count: total }
+                    })
+                    setRecentJobs(topWithCounts)
+                } catch (err) {
+                    setRecentJobs(top)
+                }
             } else {
                 // Show aggregate stats for all companies the user has access to
                 if (companies.length === 0) {
@@ -379,7 +438,19 @@ const RecruiterDashboard = () => {
                         loading: false
                     })
 
-                    setRecentJobs(validHirings.slice(0, 5))
+                    const top = validHirings.slice(0, 5)
+                    try {
+                        const hiringPromises = top.map(h => axios.get(`/companies/${h.company_id || selectedCompany.id}/hiring/${h.id}/applications`, { params: { per_page: 1 } }).catch(() => null))
+                        const hiringResults = await Promise.all(hiringPromises)
+                        const topWithCounts = top.map((h, idx) => {
+                            const res = hiringResults[idx]
+                            const total = res && res.data && res.data.data && res.data.data.pagination ? res.data.data.pagination.total : (h.application_count || 0)
+                            return { ...h, application_count: total }
+                        })
+                        setRecentJobs(topWithCounts)
+                    } catch (err) {
+                        setRecentJobs(top)
+                    }
                 }
             }
         } catch (error) {
@@ -518,7 +589,10 @@ const RecruiterDashboard = () => {
                                     {recentJobs.map((job) => (
                                         <div key={job.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:border-[#00B8D4] transition-colors">
                                             <div className="flex-1">
-                                                <h4 className="font-semibold text-gray-900">{job.job_title}</h4>
+                                                <h4 className="font-semibold text-gray-900">
+                                                    {job.job_title}
+                                                    <span className="ml-2 text-sm font-medium text-gray-500">at {job.company?.name || job.company_name || job.company?.company_name || (selectedCompany && selectedCompany.name) || 'Company'}</span>
+                                                </h4>
                                                 <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
                                                     <span>{job.hiring_type}</span>
                                                     <span>•</span>
@@ -534,6 +608,41 @@ const RecruiterDashboard = () => {
                                                 <p className="text-xs text-gray-500 mt-1">
                                                     {new Date(job.posted_at).toLocaleDateString()}
                                                 </p>
+                                                { (canManage || canPost) && (
+                                                    <div className="flex items-center justify-end gap-2 mt-3">
+                                                        <button onClick={() => navigate(`/dashboard/jobs/${job.id}/applicants`)} className="px-3 py-1 text-sm text-[#00B8D4] hover:text-[#007a8a] font-medium flex items-center gap-2">
+                                                            <span>Applicants</span>
+                                                            <span className="inline-flex items-center justify-center px-2 py-0.5 bg-white text-sm font-bold rounded-full text-[#00B8D4] border border-[#00B8D4]">
+                                                                {typeof job.application_count === 'number' ? job.application_count : (job.application_count || 0)}
+                                                            </span>
+                                                        </button>
+                                                        {canManage && (
+                                                            <>
+                                                                <button onClick={() => navigate(`/dashboard/jobs/${job.id}/edit`)} className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"><Edit className="w-4 h-4"/>Edit</button>
+                                                                <button onClick={async () => {
+                                                                    if (!window.confirm('Are you sure you want to delete this posting?')) return;
+                                                                    const res = await deleteHiring(selectedCompany.id, job.id);
+                                                                    if (res.success) {
+                                                                        // refresh stats
+                                                                        fetchRecruiterStats()
+                                                                    } else {
+                                                                        alert(res.message || 'Failed to delete posting')
+                                                                    }
+                                                                }} className="px-3 py-1 text-sm text-red-600 hover:text-red-800 font-medium flex items-center gap-2"><Trash2 className="w-4 h-4"/>Delete</button>
+                                                                <button onClick={async () => {
+                                                                    if (!window.confirm('Close this posting? This will stop accepting new applications.')) return;
+                                                                    try {
+                                                                        await axios.patch(`/companies/${selectedCompany.id}/hiring/${job.id}/close`);
+                                                                        fetchRecruiterStats()
+                                                                    } catch (err) {
+                                                                        console.error('Failed to close hiring', err);
+                                                                        alert('Failed to close posting');
+                                                                    }
+                                                                }} className="px-3 py-1 text-sm text-gray-700 hover:text-gray-900 font-medium">Close</button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))}

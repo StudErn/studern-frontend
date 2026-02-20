@@ -181,7 +181,7 @@ const CreateHiring = () => {
     setError('');
     setLoading(true);
 
-    console.log('Submitting job posting', { companyId, formData });
+    // console.log('Submitting job posting', { companyId, formData });
 
     // Build payload based on hiring type
     const payload = {
@@ -228,15 +228,39 @@ const CreateHiring = () => {
       };
     }
 
-    console.log('Payload built', payload);
+    // If internship uses specific date range, ensure dates are sent; otherwise omit them
+    if (formData.hiring_type === 'internship') {
+      const when = formData.internship_details.when_to_start;
+      if (when === 'specific_range') {
+        // Only include valid non-empty dates
+        if (formData.internship_details.start_date_from) {
+          payload.internship_details.start_date_from = formData.internship_details.start_date_from;
+        }
+        if (formData.internship_details.start_date_to) {
+          payload.internship_details.start_date_to = formData.internship_details.start_date_to;
+        }
+      } else {
+        // remove any empty date strings so backend doesn't receive invalid fields
+        delete payload.internship_details.start_date_from;
+        delete payload.internship_details.start_date_to;
+      }
+    }
+
+    // console.log('Payload built', payload);
     if (!isFree && formData.payment_package) {
       payload.payment_package = formData.payment_package;
     }
     const result = await createHiring(companyId, payload);
-    console.log('API result', result);
+    // console.log('API result', result);
     setLoading(false);
 
     if (result.success) {
+      // Paid posting: backend returns bkash_url for the user to complete payment
+      if (result.data?.requires_payment && result.data?.bkash_url) {
+        window.location.href = result.data.bkash_url;
+        return;
+      }
+      // Free posting or already-paid: go straight to jobs list
       navigate('/dashboard/jobs');
     } else {
       setError(result.message);
@@ -734,6 +758,37 @@ const CreateHiring = () => {
                     </select>
                   </div>
                 </div>
+                {formData.internship_details.when_to_start === 'specific_range' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Start Date From *
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.internship_details.start_date_from}
+                        onChange={(e) =>
+                          handleNestedChange('internship_details', 'start_date_from', e.target.value)
+                        }
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00B8D4] focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Start Date To *
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.internship_details.start_date_to}
+                        onChange={(e) =>
+                          handleNestedChange('internship_details', 'start_date_to', e.target.value)
+                        }
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00B8D4] focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

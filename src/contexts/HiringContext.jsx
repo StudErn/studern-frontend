@@ -26,11 +26,14 @@ export const HiringProvider = ({ children }) => {
       );
       return { success: true, data: response.data.data };
     } catch (error) {
-      console.error('Error creating hiring:', error);
+      // Log full response body to help debug validation errors (422)
+      console.error('Error creating hiring:', error.response?.data || error);
+      const respData = error.response?.data || {};
       return {
         success: false,
-        message: error.response?.data?.message || 'Failed to create posting',
-        errors: error.response?.data?.errors || error.response?.data?.messages || {},
+        message: respData.message || 'Failed to create posting',
+        errors: respData.errors || respData.messages || respData.data || {},
+        raw: respData,
       };
     } finally {
       setLoading(false);
@@ -156,10 +159,12 @@ export const HiringProvider = ({ children }) => {
   const applyToJob = async (hiringId, applicationData) => {
     try {
       setLoading(true);
-      const response = await axios.post(
-        `${API_BASE}/hiring/${hiringId}/apply`,
-        applicationData
-      );
+      // Backend API expects `hiring_detail_id` and `company_id` when creating an application
+      const payload = {
+        hiring_detail_id: hiringId,
+        ...(applicationData || {}),
+      };
+      const response = await axios.post(`${API_BASE}/applications`, payload);
       return { success: true, data: response.data.data };
     } catch (error) {
       console.error('Error applying to job:', error);

@@ -98,6 +98,24 @@ export const CompanyProvider = ({ children }) => {
     }
   };
 
+  // Canonical list that mirrors the backend ValidCompanyPrivilegeName whitelist exactly.
+  // Keep this in sync with app/Rules/ValidCompanyPrivilegeName.php.
+  const buildPrivilegeFallback = () => [
+    { code: 'admin',                  name: 'Administrator',       description: 'Full administrative access to the company' },
+    { code: 'editor',                 name: 'Editor',              description: 'Can edit company content and postings' },
+    { code: 'viewer',                 name: 'Viewer',              description: 'Read-only access to company data' },
+    { code: 'member',                 name: 'Member',              description: 'Basic company membership' },
+    { code: 'can_manage_users',       name: 'Manage Members',      description: 'Invite and remove company members' },
+    { code: 'can_manage_permissions', name: 'Manage Permissions',  description: 'Assign and revoke member privileges' },
+    { code: 'can_manage_company',     name: 'Manage Company',      description: 'Update company profile and settings' },
+    { code: 'can_post_jobs',          name: 'Post Jobs',           description: 'Create new job and internship postings' },
+    { code: 'can_manage_jobs',        name: 'Manage Jobs',         description: 'Edit and delete job postings' },
+    { code: 'can_view_jobs',          name: 'View Jobs',           description: 'View all job postings' },
+    { code: 'can_apply_jobs',         name: 'Apply to Jobs',       description: 'Apply to jobs on behalf of the company' },
+    { code: 'can_view_reports',       name: 'View Reports',        description: 'Access analytics and reports' },
+    { code: 'can_manage_applications',name: 'Manage Applications', description: 'Review and manage job applications' },
+  ];
+
   // Fetch available system privileges (admin endpoint). Falls back to defaults.
   const fetchAvailablePrivileges = async () => {
     // First check if user has system admin privileges
@@ -111,29 +129,13 @@ export const CompanyProvider = ({ children }) => {
       
       if (!hasSystemAdmin) {
         // User is not a system admin, use fallback
-        const fallback = [
-          { code: 'admin', name: 'Administrator', description: 'Full administrative access' },
-          { code: 'can_manage_users', name: 'Manage Members', description: 'Invite and manage company members' },
-          { code: 'can_manage_permissions', name: 'Manage Privileges', description: 'Assign and revoke member privileges' },
-          { code: 'can_post_jobs', name: 'Post Jobs', description: 'Create new job postings' },
-          { code: 'can_manage_jobs', name: 'Manage Jobs', description: 'Edit and delete job postings' },
-          { code: 'can_view_jobs', name: 'View Jobs', description: 'View all job postings' },
-          { code: 'can_manage_company', name: 'Manage Company', description: 'Update company information' },
-        ];
+const fallback = buildPrivilegeFallback();
         setAvailablePrivileges(fallback);
         return fallback;
       }
     } catch (error) {
       // If we can't check privileges, assume not admin and use fallback
-      const fallback = [
-        { code: 'admin', name: 'Administrator', description: 'Full administrative access' },
-        { code: 'can_manage_users', name: 'Manage Members', description: 'Invite and manage company members' },
-        { code: 'can_manage_permissions', name: 'Manage Privileges', description: 'Assign and revoke member privileges' },
-        { code: 'can_post_jobs', name: 'Post Jobs', description: 'Create new job postings' },
-        { code: 'can_manage_jobs', name: 'Manage Jobs', description: 'Edit and delete job postings' },
-        { code: 'can_view_jobs', name: 'View Jobs', description: 'View all job postings' },
-        { code: 'can_manage_company', name: 'Manage Company', description: 'Update company information' },
-      ];
+      const fallback = buildPrivilegeFallback();
       setAvailablePrivileges(fallback);
       return fallback;
     }
@@ -152,15 +154,7 @@ export const CompanyProvider = ({ children }) => {
       return normalized;
     } catch (error) {
       // Even for admins, if the endpoint fails, use fallback
-      const fallback = [
-        { code: 'admin', name: 'Administrator', description: 'Full administrative access' },
-        { code: 'can_manage_users', name: 'Manage Members', description: 'Invite and manage company members' },
-        { code: 'can_manage_permissions', name: 'Manage Privileges', description: 'Assign and revoke member privileges' },
-        { code: 'can_post_jobs', name: 'Post Jobs', description: 'Create new job postings' },
-        { code: 'can_manage_jobs', name: 'Manage Jobs', description: 'Edit and delete job postings' },
-        { code: 'can_view_jobs', name: 'View Jobs', description: 'View all job postings' },
-        { code: 'can_manage_company', name: 'Manage Company', description: 'Update company information' },
-      ];
+      const fallback = buildPrivilegeFallback();
       setAvailablePrivileges(fallback);
       return fallback;
     }
@@ -225,6 +219,22 @@ export const CompanyProvider = ({ children }) => {
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to fetch users',
+      };
+    }
+  };
+
+  // Remove a user from the company
+  const removeUserFromCompany = async (companyId, userId) => {
+    try {
+      const response = await axios.delete(`${API_BASE}/companies/${companyId}/users/${userId}`);
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      console.error('Error removing user from company:', error.response?.data || error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to remove user',
+        status: error.response?.status,
+        raw: error.response?.data,
       };
     }
   };
@@ -301,6 +311,7 @@ export const CompanyProvider = ({ children }) => {
     hasPrivilege,
     addUserToCompany,
     manageUserPrivileges,
+    removeUserFromCompany,
     getCompanyUsers,
     fetchAvailablePrivileges,
   };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCompany } from '../../contexts/CompanyContext';
+import { useToast } from '../../contexts/ToastContext';
 import {
   Users,
   UserPlus,
@@ -23,6 +24,7 @@ const MemberManagement = () => {
     selectedCompany,
     availablePrivileges,
     fetchAvailablePrivileges,
+    removeUserFromCompany,
   } = useCompany();
   const [members, setMembers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,9 +36,38 @@ const MemberManagement = () => {
   const [selectedPrivileges, setSelectedPrivileges] = useState([]);
   const [privilegeError, setPrivilegeError] = useState('');
   const [privilegeErrorRaw, setPrivilegeErrorRaw] = useState(null);
+  const [confirmRemove, setConfirmRemove] = useState(null);
+  const { showToast } = useToast();
 
-  const canAddMembers = hasPrivilege('can_add_members');
-  const canManagePrivileges = hasPrivilege('can_manage_privileges');
+  const handleConfirmRemove = async () => {
+    if (!confirmRemove) return;
+    const effectiveCompanyId = companyId || selectedCompany?.id;
+    if (!effectiveCompanyId) return;
+
+    const userId = confirmRemove.user_id || confirmRemove.user?.id || null;
+    if (!userId) {
+      showToast('Unable to determine user id to remove', 'error');
+      setConfirmRemove(null);
+      return;
+    }
+
+    try {
+      const res = await removeUserFromCompany(effectiveCompanyId, userId);
+      if (res.success) {
+        showToast('Member removed from company', 'success');
+        setConfirmRemove(null);
+        loadMembers();
+      } else {
+        showToast(res.message || 'Failed to remove member', 'error');
+      }
+    } catch (err) {
+      showToast('Failed to remove member', 'error');
+    }
+  };
+
+  const canAddMembers = hasPrivilege('can_manage_users');        // backend checks can_manage_users
+  const canManagePrivileges = hasPrivilege('can_manage_permissions'); // backend checks can_manage_permissions
+  const canRemoveMembers = hasPrivilege('can_manage_users');
 
 
 
@@ -95,7 +126,12 @@ const MemberManagement = () => {
 
   const handleEditPrivileges = (member) => {
     setEditingMember(member);
-    setSelectedPrivileges(member.privileges.map((p) => p.privilege_code));
+    // Only pre-check privileges that are actually granted (is_granted === true)
+    setSelectedPrivileges(
+      member.privileges
+        .filter((p) => p.is_granted)
+        .map((p) => p.privilege_code)
+    );
   };
 
   const handleSavePrivileges = async () => {
@@ -258,8 +294,11 @@ const MemberManagement = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
-                        {member.privileges.length > 0 ? (
-                          member.privileges.slice(0, 2).map((priv) => (
+                        {member.privileges.filter((p) => p.is_granted).length > 0 ? (
+                          member.privileges
+                            .filter((p) => p.is_granted)
+                            .slice(0, 2)
+                            .map((priv) => (
                             <span
                               key={priv.id}
                               className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs"
@@ -270,9 +309,9 @@ const MemberManagement = () => {
                         ) : (
                           <span className="text-sm text-gray-400">No privileges</span>
                         )}
-                        {member.privileges.length > 2 && (
+                        {member.privileges.filter((p) => p.is_granted).length > 2 && (
                           <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                            +{member.privileges.length - 2} more
+                            +{member.privileges.filter((p) => p.is_granted).length - 2} more
                           </span>
                         )}
                       </div>
@@ -281,7 +320,7 @@ const MemberManagement = () => {
                       {new Date(member.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
-                      {canManagePrivileges && !member.is_admin && (
+                      {canManagePrivileges && (
                         <button
                           onClick={() => handleEditPrivileges(member)}
                           className="flex items-center gap-1 px-3 py-1 text-[#00B8D4] border border-[#00B8D4] rounded hover:bg-[#00B8D4] hover:text-white transition text-sm font-medium"
@@ -290,8 +329,17 @@ const MemberManagement = () => {
                           Manage
                         </button>
                       )}
+                      {canRemoveMembers && !member.is_admin && (
+                        <button
+                          onClick={() => setConfirmRemove(member)}
+                          className="ml-2 inline-flex items-center gap-1 px-3 py-1 text-red-600 border border-red-200 rounded hover:bg-red-50 transition text-sm font-medium"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Remove
+                        </button>
+                      )}
                       {member.is_admin && (
-                        <span className="text-xs text-gray-500">Admin (Full Access)</span>
+                        <span className="ml-2 text-xs text-gray-500">Admin (Full Access)</span>
                       )}
                     </td>
                   </tr>
@@ -433,6 +481,34 @@ const MemberManagement = () => {
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-[#00B8D4] to-[#0097a7] text-white rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
                 >
                   {loading ? 'Saving...' : 'Save Privileges'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Confirm Remove Modal */}
+      {confirmRemove && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-bold">Remove Member</h3>
+              <button onClick={() => setConfirmRemove(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-700">Are you sure you want to remove <strong>{confirmRemove.user?.name || confirmRemove.user?.email || 'this member'}</strong> from the company? This action can be undone by inviting them again.</p>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setConfirmRemove(null)}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmRemove}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700"
+                >
+                  Remove Member
                 </button>
               </div>
             </div>

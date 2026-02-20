@@ -87,7 +87,7 @@ const EditHiring = () => {
           hiring_type: h.hiring_type || 'job',
           work_from: h.work_from || 'remote',
           employment_type: h.employment_type || 'full-time',
-          job_details: h.job_detail || h.job_details || {
+          job_details: h.job_detail || {
             payment_type: 'fixed_pay',
             min_salary: '',
             max_salary: '',
@@ -97,7 +97,7 @@ const EditHiring = () => {
             timeline: 1,
             experience_year: '',
           },
-          internship_details: h.internship_detail || h.internship_details || {
+          internship_details: h.internship_detail || {
             min_stipend: '',
             max_stipend: '',
             currency: 'BDT',
@@ -109,7 +109,7 @@ const EditHiring = () => {
             start_date_from: '',
             start_date_to: '',
           },
-          work_from_details: h.work_from_details || h.work_from_detail || defaultWorkFrom,
+          work_from_details: h.work_from_detail || defaultWorkFrom,
         });
       } else {
         setError(res.message || 'Failed to load posting');

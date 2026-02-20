@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useHiring } from '../../contexts/HiringContext';
 import { useCompany } from '../../contexts/CompanyContext';
+import axios from 'axios';
 import {
   Briefcase,
   Plus,
@@ -50,7 +51,20 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
     if (!companyId) return;
     const result = await getCompanyHirings(companyId);
     if (result.success) {
-      setHirings(result.data || []);
+      const base = result.data || [];
+      // fetch application counts for each hiring in parallel (lightweight: per_page=1 to get pagination.total)
+      try {
+        const promises = base.map(h => axios.get(`/companies/${companyId}/hiring/${h.id}/applications`, { params: { per_page: 1 } }).catch(() => null));
+        const results = await Promise.all(promises);
+        const withCounts = base.map((h, idx) => {
+          const res = results[idx];
+          const total = res && res.data && res.data.data && res.data.data.pagination ? res.data.data.pagination.total : (h.application_count || 0);
+          return { ...h, application_count: total };
+        });
+        setHirings(withCounts);
+      } catch (err) {
+        setHirings(base);
+      }
     } else {
       console.error('Failed to load hirings:', result.message);
       setHirings([]);
@@ -123,27 +137,27 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
     );
   };
 
-  const formatSalary = (hiring) => {
-    if (!hiring) return 'Not specified';
+  // const formatSalary = (hiring) => {
+  //   if (!hiring) return 'Not specified';
 
-    if (hiring.hiring_type === 'job' && hiring.job_detail) {
-      const job = hiring.job_detail;
-      if (job.payment_type === 'fixed_pay') {
-        if (job.min_salary && job.max_salary) {
-          return `${job.currency || 'BDT'} ${job.min_salary.toLocaleString()} - ${job.max_salary.toLocaleString()} / ${job.pay_per || 'year'}`;
-        }
-        return `${job.currency || 'BDT'} ${job.min_salary?.toLocaleString() || 'N/A'} / ${job.pay_per || 'year'}`;
-      }
-      return 'Performance based';
-    } else if (hiring.hiring_type === 'internship' && hiring.internship_detail) {
-      const intern = hiring.internship_detail;
-      if (intern.min_stipend && intern.max_stipend) {
-        return `${intern.currency || 'BDT'} ${intern.min_stipend.toLocaleString()} - ${intern.max_stipend.toLocaleString()} / ${intern.pay_per || 'month'}`;
-      }
-      return 'Unpaid / Learning';
-    }
-    return 'Not specified';
-  };
+  //   if (hiring.hiring_type === 'job' && hiring.job_detail) {
+  //     const job = hiring.job_detail;
+  //     if (job.payment_type === 'fixed_pay') {
+  //       if (job.min_salary && job.max_salary) {
+  //         return `${job.currency || 'BDT'} ${job.min_salary.toLocaleString()} - ${job.max_salary.toLocaleString()} / ${job.pay_per || 'year'}`;
+  //       }
+  //       return `${job.currency || 'BDT'} ${job.min_salary?.toLocaleString() || 'N/A'} / ${job.pay_per || 'year'}`;
+  //     }
+  //     return 'Performance based';
+  //   } else if (hiring.hiring_type === 'internship' && hiring.internship_detail) {
+  //     const intern = hiring.internship_detail;
+  //     if (intern.min_stipend && intern.max_stipend) {
+  //       return `${intern.currency || 'BDT'} ${intern.min_stipend.toLocaleString()} - ${intern.max_stipend.toLocaleString()} / ${intern.pay_per || 'month'}`;
+  //     }
+  //     return 'Unpaid / Learning';
+  //   }
+  //   return 'Not specified';
+  // };
 
   // Show loading state if no company is selected
   if (!effectiveCompany) {
@@ -295,13 +309,13 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
+                  {/* <div className="flex flex-col items-end gap-2">
                     <div className="text-right">
                       <div className="text-lg font-bold text-[#00B8D4]">
                         {formatSalary(hiring)}
                       </div>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 <p className="text-gray-600 mb-4 line-clamp-2">
@@ -347,16 +361,23 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-4 border-t">
-                  {/* TODO: Implement View Details route */}
-                  {/* <button
-                    onClick={() =>
-                      navigate(`/company/${effectiveCompany.id}/hiring/${hiring.id}`)
-                    }
-                    className="flex items-center gap-2 px-4 py-2 text-[#00B8D4] border-2 border-[#00B8D4] rounded-lg font-semibold hover:bg-[#00B8D4] hover:text-white transition"
-                  >
-                    <Eye className="w-4 h-4" />
-                    View Details
-                  </button> */}
+                  {/* Applicants button — visible to recruiters who can manage */}
+                  {(canManage || canPost) && (
+                    <button
+                      onClick={() =>
+                        navigate(`/dashboard/jobs/${hiring.id}/applicants`)
+                      }
+                      className="flex items-center gap-2 px-4 py-2 text-[#00B8D4] border-2 border-[#00B8D4] rounded-lg font-semibold hover:bg-[#00B8D4] hover:text-white transition"
+                    >
+                      <Users className="w-4 h-4" />
+                      <span className="flex items-center gap-2">
+                        <span>Applicants</span>
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 bg-white text-sm font-bold rounded-full text-[#00B8D4] border border-[#00B8D4]">
+                          {typeof hiring.application_count === 'number' ? hiring.application_count : (hiring.application_count || 0)}
+                        </span>
+                      </span>
+                    </button>
+                  )}
                   {canManage && (
                     <>
                       <button
@@ -374,6 +395,22 @@ const HiringList = ({ company, companyId: companyIdProp }) => {
                       >
                         <Trash2 className="w-4 h-4" />
                         Delete
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!window.confirm('Close this posting? This will stop accepting new applications.')) return;
+                          try {
+                            await axios.patch(`/companies/${effectiveCompanyId}/hiring/${hiring.id}/close`);
+                            // reload hirings
+                            loadHirings(effectiveCompanyId);
+                          } catch (err) {
+                            console.error('Failed to close hiring', err);
+                            alert('Failed to close posting');
+                          }
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 text-gray-700 border-2 border-gray-200 rounded-lg font-semibold hover:bg-gray-100 transition ml-2"
+                      >
+                        Close
                       </button>
                     </>
                   )}

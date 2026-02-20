@@ -37,12 +37,16 @@ import AdminHiring from './pages/AdminHiring'
 import Applications from './pages/Applications'
 import Interviews from './pages/Interviews'
 import SavedJobs from './pages/SavedJobs'
+import ApplicationDetail from './pages/ApplicationDetail'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import ApplicantFindJobs from './pages/ApplicantFindJobs'
 import ApplicantJobDetails from './pages/ApplicantJobDetails'
 import ApplicantJobs from './pages/ApplicantJobs'
 import ApplicantInternships from './pages/ApplicantInternships'
+import CompanyApplicants from './pages/CompanyApplicants'
+import PaymentReturn from './pages/PaymentReturn'
+import GoogleAuthCallback from './pages/GoogleAuthCallback'
 
 function App() {
   return (
@@ -59,6 +63,8 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/find-jobs" element={<FindJobs />} />
+                  <Route path="/find-internships" element={<FindJobs />} />
+                  <Route path="/internships" element={<Navigate to="/find-internships" replace />} />
                   <Route path="/jobs" element={<JobBrowse />} />
                   <Route path="/jobs/:id" element={<JobDetails />} />
                   <Route path="/verify-contact" element={<VerifyContact />} />
@@ -68,6 +74,12 @@ function App() {
                   <Route path="/internship-sprint" element={<InternshipSprintPage />} />
                   <Route path="/job-fair" element={<JobFairPage />} />
                   <Route path="/book-session" element={<BookSession />} />
+                  
+                  {/* Payment return page — bKash redirects here after payment */}
+                  <Route path="/payment/return" element={<PaymentReturn />} />
+
+                  {/* Google OAuth callback — backend redirects here after OAuth */}
+                  <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
                   
                   {/* Post Job Route - redirects based on auth status */}
                   <Route path="/post-job" element={<PostJobRedirect />} />
@@ -84,6 +96,7 @@ function App() {
                     <Route path="/dashboard/find-jobs/internships" element={<ApplicantInternships />} />
                     <Route path="/dashboard/find-jobs/:id" element={<ApplicantJobDetails />} />
                     <Route path="/dashboard/applications" element={<Applications />} />
+                    <Route path="/dashboard/applications/:id" element={<ApplicationDetail />} />
                     <Route path="/dashboard/interviews" element={<Interviews />} />
                     <Route path="/dashboard/saved-jobs" element={<SavedJobs />} />
                     <Route path="/dashboard/profile" element={<Profile />} />
@@ -97,6 +110,7 @@ function App() {
                     <Route path="/dashboard/jobs" element={<DashboardJobs />} />
                     <Route path="/dashboard/jobs/create" element={<CreateHiring />} />
                     <Route path="/dashboard/jobs/:id/edit" element={<EditHiring />} />
+                    <Route path="/dashboard/jobs/:hiringId/applicants" element={<CompanyApplicants />} />
                     <Route path="/dashboard/company/:companyId/edit" element={<EditCompany />} />
                     <Route path="/dashboard/members" element={<MemberManagement />} />
                   </Route>

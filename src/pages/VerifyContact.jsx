@@ -146,7 +146,7 @@ const VerifyContact = () => {
         <div className="min-h-screen flex flex-col bg-white p-4 md:p-8 font-sans">
             <div className="mb-4">
                 <button 
-                    onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} 
+                    onClick={() => navigate('/')} 
                     className="text-[#1A3C40] text-sm font-bold no-underline hover:underline"
                 >
                     Go back
