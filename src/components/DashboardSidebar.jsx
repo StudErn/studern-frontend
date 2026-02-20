@@ -17,6 +17,7 @@ const DashboardSidebar = () => {
                     { icon: '💼', label: 'Company Jobs', path: '/dashboard/jobs' },
                     { icon: '➕', label: 'Post Job', path: '/dashboard/jobs/create' },
                     { icon: '👥', label: 'Team Members', path: '/dashboard/members' },
+                    { icon: '⚙️', label: 'Company Settings', path: '/dashboard/company/settings' },
                     { icon: '👤', label: 'Profile', path: '/profile' },
                 ]
             case 'system_panel':

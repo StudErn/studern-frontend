@@ -19,16 +19,19 @@ import {
   XCircle,
   FileText,
   User,
+  Video,
+  FolderKanban,
+  Award,
+  Link as LinkIcon,
 } from 'lucide-react';
 
 // ─── Status config ───────────────────────────────────────────────────────────
 const STATUS_TABS = [
-  { key: 'all',         label: 'All',         color: 'text-gray-600',  bg: 'bg-gray-100' },
-  { key: 'pending',     label: 'Pending',      color: 'text-yellow-700', bg: 'bg-yellow-100' },
-  { key: 'reviewing',   label: 'Reviewing',    color: 'text-blue-700',   bg: 'bg-blue-100' },
-  { key: 'shortlisted', label: 'Shortlisted',  color: 'text-purple-700', bg: 'bg-purple-100' },
-  { key: 'rejected',    label: 'Rejected',     color: 'text-red-700',    bg: 'bg-red-100' },
-  { key: 'accepted',    label: 'Accepted',     color: 'text-green-700',  bg: 'bg-green-100' },
+  { key: 'all',         label: 'All',         color: 'text-gray-600',   bg: 'bg-gray-100' },
+  { key: 'reviewing',   label: 'Reviewing',   color: 'text-blue-700',   bg: 'bg-blue-100' },
+  { key: 'shortlisted', label: 'Shortlisted', color: 'text-purple-700', bg: 'bg-purple-100' },
+  { key: 'rejected',    label: 'Rejected',    color: 'text-red-700',    bg: 'bg-red-100' },
+  { key: 'accepted',    label: 'Accepted',    color: 'text-green-700',  bg: 'bg-green-100' },
 ];
 
 const statusStyle = (status) => {
@@ -65,6 +68,12 @@ const ApplicantProfile = ({ companyId, hiringId, applicationId, onClose, onStatu
   const [updating, setUpdating] = useState(false);
   const [confirmAccept, setConfirmAccept] = useState(false);
   const [notes, setNotes] = useState('');
+  const [showInterviewForm, setShowInterviewForm] = useState(false);
+  const [schedulingInterview, setSchedulingInterview] = useState(false);
+  const [interviewForm, setInterviewForm] = useState({
+    title: '', scheduled_at: '', interview_type: 'video',
+    duration_minutes: 60, meeting_link: '', location: '', notes: '',
+  });
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -88,6 +97,8 @@ const ApplicantProfile = ({ companyId, hiringId, applicationId, onClose, onStatu
               current_job_title: payload.applicant.current_job || payload.applicant.current_job_title || null,
               current_company_name: payload.applicant.current_company || payload.applicant.current_company_name || null,
               work_experiences: payload.applicant.work_experiences || [],
+              projects: payload.applicant.projects || [],
+              achievements: payload.applicant.achievements || [],
             };
           }
           setData(normalized);
@@ -128,6 +139,27 @@ const ApplicantProfile = ({ companyId, hiringId, applicationId, onClose, onStatu
     } finally {
       setUpdating(false);
       setConfirmAccept(false);
+    }
+  };
+
+  const handleCallForInterview = async () => {
+    if (!interviewForm.title.trim() || !interviewForm.scheduled_at) {
+      return;
+    }
+    setSchedulingInterview(true);
+    try {
+      await axios.post(
+        `/companies/${companyId}/hiring/${hiringId}/applications/${applicationId}/interview`,
+        interviewForm
+      );
+      showToast('Interview scheduled! The applicant will see it in their dashboard.', 'success');
+      onStatusChange(applicationId, 'shortlisted');
+      setShowInterviewForm(false);
+      onClose();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to schedule interview', 'error');
+    } finally {
+      setSchedulingInterview(false);
     }
   };
 
@@ -233,6 +265,63 @@ const ApplicantProfile = ({ companyId, hiringId, applicationId, onClose, onStatu
               )}
             </div>
 
+            {/* Projects */}
+            {data.user?.projects && data.user.projects.length > 0 && (
+              <div>
+                <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+                  <FolderKanban className="w-4 h-4 text-[#00B8D4]" /> Projects
+                </h4>
+                <div className="space-y-3">
+                  {data.user.projects.map((project) => (
+                    <div key={project.id} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-gray-900">{project.title}</p>
+                        {project.url && (
+                          <a href={project.url} target="_blank" rel="noopener noreferrer" className="text-[#00B8D4] hover:underline flex-shrink-0">
+                            <LinkIcon className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+                      {project.description && (
+                        <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-3">{project.description}</p>
+                      )}
+                      {project.technologies && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {project.technologies.split(',').map((tech, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-white border border-gray-200 text-xs text-gray-600 rounded-full">{tech.trim()}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Achievements */}
+            {data.user?.achievements && data.user.achievements.length > 0 && (
+              <div>
+                <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-[#00B8D4]" /> Achievements
+                </h4>
+                <div className="space-y-2">
+                  {data.user.achievements.map((ach) => (
+                    <div key={ach.id} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <Award className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900">{ach.title}</p>
+                        {ach.issuer && <p className="text-xs text-gray-500 mt-0.5">{ach.issuer}</p>}
+                        {ach.description && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{ach.description}</p>}
+                        {ach.year && <p className="text-xs text-gray-400 mt-1">{ach.year}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Notes */}
             {['pending', 'reviewing', 'shortlisted'].includes(data.status) && (
               <div>
@@ -271,7 +360,7 @@ const ApplicantProfile = ({ companyId, hiringId, applicationId, onClose, onStatu
             )}
 
             {/* Action Buttons */}
-            {!confirmAccept && (
+            {!confirmAccept && !showInterviewForm && (
               <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
                 {data.status === 'pending' && (
                   <button
@@ -293,6 +382,15 @@ const ApplicantProfile = ({ companyId, hiringId, applicationId, onClose, onStatu
                 )}
                 {['reviewing', 'shortlisted'].includes(data.status) && (
                   <button
+                    onClick={() => setShowInterviewForm(true)}
+                    disabled={updating}
+                    className="flex-1 py-2.5 bg-[#1A3C40] text-white rounded-xl text-sm font-bold hover:bg-[#1A3C40]/90 disabled:opacity-60 flex items-center justify-center gap-1.5"
+                  >
+                    <Video className="w-4 h-4" /> Call for Interview
+                  </button>
+                )}
+                {['reviewing', 'shortlisted'].includes(data.status) && (
+                  <button
                     onClick={() => handleStatus('accepted')}
                     disabled={updating}
                     className="flex-1 py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-60"
@@ -309,6 +407,96 @@ const ApplicantProfile = ({ companyId, hiringId, applicationId, onClose, onStatu
                     <XCircle className="w-4 h-4" /> Reject
                   </button>
                 )}
+              </div>
+            )}
+
+            {/* Interview Scheduling Form */}
+            {showInterviewForm && (
+              <div className="mt-1 p-4 rounded-xl bg-purple-50 border border-purple-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+                    <Video className="w-4 h-4 text-purple-600" /> Schedule Interview
+                  </p>
+                  <button onClick={() => setShowInterviewForm(false)} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Interview Title *</label>
+                  <input
+                    type="text"
+                    value={interviewForm.title}
+                    onChange={e => setInterviewForm({ ...interviewForm, title: e.target.value })}
+                    placeholder="e.g. Technical Round 1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00B8D4] bg-white"
+                    autoFocus
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Date & Time *</label>
+                    <input
+                      type="datetime-local"
+                      value={interviewForm.scheduled_at}
+                      onChange={e => setInterviewForm({ ...interviewForm, scheduled_at: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00B8D4] bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Type</label>
+                    <select
+                      value={interviewForm.interview_type}
+                      onChange={e => setInterviewForm({ ...interviewForm, interview_type: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00B8D4] bg-white"
+                    >
+                      <option value="video">Video</option>
+                      <option value="phone">Phone</option>
+                      <option value="in-person">In-Person</option>
+                      <option value="technical">Technical</option>
+                      <option value="hr">HR</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Duration (mins)</label>
+                    <input
+                      type="number"
+                      value={interviewForm.duration_minutes}
+                      onChange={e => setInterviewForm({ ...interviewForm, duration_minutes: parseInt(e.target.value) || 60 })}
+                      min={15} max={480}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00B8D4] bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      {interviewForm.interview_type === 'in-person' ? 'Location' : 'Meeting Link'}
+                    </label>
+                    <input
+                      type="text"
+                      value={interviewForm.interview_type === 'in-person' ? interviewForm.location : interviewForm.meeting_link}
+                      onChange={e => interviewForm.interview_type === 'in-person'
+                        ? setInterviewForm({ ...interviewForm, location: e.target.value })
+                        : setInterviewForm({ ...interviewForm, meeting_link: e.target.value })
+                      }
+                      placeholder={interviewForm.interview_type === 'in-person' ? 'Office address' : 'https://meet.google.com/...'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00B8D4] bg-white"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => setShowInterviewForm(false)}
+                    className="flex-1 py-2 border border-gray-300 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCallForInterview}
+                    disabled={schedulingInterview || !interviewForm.title.trim() || !interviewForm.scheduled_at}
+                    className="flex-1 py-2 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 disabled:opacity-60"
+                  >
+                    {schedulingInterview ? 'Scheduling…' : 'Confirm & Schedule'}
+                  </button>
+                </div>
               </div>
             )}
           </div>

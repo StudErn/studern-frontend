@@ -45,6 +45,7 @@ import ApplicantJobDetails from './pages/ApplicantJobDetails'
 import ApplicantJobs from './pages/ApplicantJobs'
 import ApplicantInternships from './pages/ApplicantInternships'
 import CompanyApplicants from './pages/CompanyApplicants'
+import CompanySettings from './pages/CompanySettings'
 import PaymentReturn from './pages/PaymentReturn'
 import GoogleAuthCallback from './pages/GoogleAuthCallback'
 import LinkedInAuthCallback from './pages/LinkedInAuthCallback'
@@ -112,6 +113,7 @@ function App() {
 
                     {/* Backwards-compatible redirects for legacy routes */}
                     <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
+                    <Route path="/applications" element={<Navigate to="/dashboard/applications" replace />} />
                     <Route path="/settings" element={<Navigate to="/dashboard/settings" replace />} />
                     
                     {/* Recruiter Routes */}
@@ -120,6 +122,7 @@ function App() {
                     <Route path="/dashboard/jobs/:id/edit" element={<EditHiring />} />
                     <Route path="/dashboard/jobs/:hiringId/applicants" element={<CompanyApplicants />} />
                     <Route path="/dashboard/company/:companyId/edit" element={<EditCompany />} />
+                    <Route path="/dashboard/company/settings" element={<CompanySettings />} />
                     <Route path="/dashboard/members" element={<MemberManagement />} />
                   </Route>
 

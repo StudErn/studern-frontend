@@ -4,7 +4,7 @@ import { useView } from '../contexts/ViewContext'
 import { useCompany } from '../contexts/CompanyContext'
 import { Link, useLocation } from 'react-router-dom'
 import axios from 'axios'
-import { Building2, Briefcase, Users, CheckCircle, XCircle, Clock, TrendingUp, Edit, Trash2 } from 'lucide-react'
+import { Building2, Briefcase, Users, CheckCircle, XCircle, Clock, TrendingUp, Edit, Trash2, Calendar, Video } from 'lucide-react'
 import { useHiring } from '../contexts/HiringContext'
 import { useNavigate } from 'react-router-dom'
 
@@ -44,6 +44,7 @@ const ApplicantDashboard = () => {
         loading: true
     })
     const [recentApplications, setRecentApplications] = useState([])
+    const [upcomingInterviewsList, setUpcomingInterviewsList] = useState([])
 
     const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
@@ -69,6 +70,13 @@ const ApplicantDashboard = () => {
             const upcomingInterviews = interviews.filter(
                 i => new Date(i.scheduled_at) > now
             ).length
+
+            // Store the upcoming interviews list for the dashboard card
+            const upcomingList = interviews
+                .filter(i => new Date(i.scheduled_at) > now && i.status !== 'cancelled')
+                .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
+                .slice(0, 5)
+            setUpcomingInterviewsList(upcomingList)
 
             setStats({
                 totalApplications: applications.length,
@@ -125,6 +133,8 @@ const ApplicantDashboard = () => {
             case 'accepted': return 'text-green-600 bg-green-50'
             case 'rejected': return 'text-red-600 bg-red-50'
             case 'pending': return 'text-yellow-600 bg-yellow-50'
+            case 'reviewing': return 'text-blue-600 bg-blue-50'
+            case 'shortlisted': return 'text-purple-600 bg-purple-50'
             default: return 'text-gray-600 bg-gray-50'
         }
     }
@@ -134,6 +144,8 @@ const ApplicantDashboard = () => {
             case 'accepted': return <CheckCircle className="w-4 h-4" />
             case 'rejected': return <XCircle className="w-4 h-4" />
             case 'pending': return <Clock className="w-4 h-4" />
+            case 'reviewing': return <TrendingUp className="w-4 h-4" />
+            case 'shortlisted': return <CheckCircle className="w-4 h-4" />
             default: return null
         }
     }
@@ -204,6 +216,87 @@ const ApplicantDashboard = () => {
                     </p>
                 </div>
             </div>
+
+            {/* Upcoming Interviews */}
+            {upcomingInterviewsList.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div className="p-6 border-b border-gray-100">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-[#1A3C40] flex items-center gap-2">
+                                <Calendar className="w-5 h-5 text-purple-600" />
+                                Upcoming Interviews
+                            </h3>
+                            <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full">
+                                {stats.upcomingInterviews} scheduled
+                            </span>
+                        </div>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                        {upcomingInterviewsList.map((interview) => {
+                            const scheduledAt = new Date(interview.scheduled_at)
+                            const company = interview.application?.company
+                            const hiring = interview.application?.hiring
+                            const typeIcons = { video: <Video className="w-3.5 h-3.5" />, phone: <Clock className="w-3.5 h-3.5" />, 'in-person': <Building2 className="w-3.5 h-3.5" /> }
+                            return (
+                                <div key={interview.id} className="p-5 hover:bg-gray-50 transition-colors">
+                                    <div className="flex items-start gap-4">
+                                        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex flex-col items-center justify-center text-center">
+                                            <span className="text-xs font-bold text-purple-700 leading-none">
+                                                {scheduledAt.toLocaleString('default', { month: 'short' }).toUpperCase()}
+                                            </span>
+                                            <span className="text-lg font-extrabold text-purple-900 leading-tight">
+                                                {scheduledAt.getDate()}
+                                            </span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div>
+                                                    <p className="font-semibold text-gray-900 truncate">
+                                                        {hiring?.job_title || interview.title}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500 mt-0.5">
+                                                        {company?.name || 'Company'}
+                                                    </p>
+                                                </div>
+                                                <span className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                    interview.status === 'scheduled' ? 'bg-purple-50 text-purple-700' :
+                                                    interview.status === 'completed' ? 'bg-green-50 text-green-700' :
+                                                    'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                    {typeIcons[interview.interview_type] || <Calendar className="w-3.5 h-3.5" />}
+                                                    <span className="capitalize">{interview.interview_type}</span>
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                                                <span className="flex items-center gap-1">
+                                                    <Clock className="w-3 h-3" />
+                                                    {scheduledAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                {interview.duration_minutes && (
+                                                    <span>{interview.duration_minutes} min</span>
+                                                )}
+                                                {interview.meeting_link && (
+                                                    <a
+                                                        href={interview.meeting_link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1 text-[#00B8D4] hover:underline font-medium"
+                                                    >
+                                                        <Video className="w-3 h-3" /> Join meeting
+                                                    </a>
+                                                )}
+                                                {interview.location && !interview.meeting_link && (
+                                                    <span>{interview.location}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Recent Applications */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
