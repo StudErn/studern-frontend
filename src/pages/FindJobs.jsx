@@ -30,9 +30,9 @@ const FindJobs = () => {
     const [error, setError] = useState(null);
     const [trendingSkills, setTrendingSkills] = useState([]);
     const [filters, setFilters] = useState({
-        experience: [],
-        jobType: [],
-        workType: []
+        experience: [],      // 'fresher' | '1-2' | '3+'
+        employmentType: [],  // 'full-time' | 'part-time' | 'contract' | 'temporary' | 'freelance'
+        workFrom: [],        // 'remote' | 'onsite' | 'hybrid'
     });
 
     // Mobile filter drawer state
@@ -85,69 +85,46 @@ const FindJobs = () => {
     };
 
     const clearAllFilters = () => {
-        setFilters({
-            experience: [],
-            jobType: [],
-            workType: []
-        });
+        setFilters({ experience: [], employmentType: [], workFrom: [] });
         setSearchQuery('');
     };
     
-    // Map backend data to match filter expectations
-    const mapJobToFilters = (job) => {
-        let experience = 'Freshers';
-        if (job.job_detail?.experience_year) {
-            const years = job.job_detail.experience_year;
-            if (years < 1) experience = 'Freshers';
-            else if (years === 1) experience = '< 1 year';
-            else if (years <= 2) experience = '1-2 years';
-        }
-        
-        let jobType = job.employment_type === 'full-time' ? 'Fulltime' : 
-                      job.employment_type === 'part-time' ? 'Part time' : 'Fulltime';
-        
-        let workType = job.work_from === 'remote' ? 'Remote' :
-                       job.work_from === 'onsite' ? 'On site' :
-                       job.work_from === 'hybrid' ? 'Hybrid' : 'Remote';
-        
-        return { experience, jobType, workType };
-    };
+
 
 
     useEffect(() => {
         let result = [...allJobs];
 
-        // Filter by Search Query
+        // Filter by search query
         if (searchQuery) {
-            const lowerQuery = searchQuery.toLowerCase();
+            const q = searchQuery.toLowerCase();
             result = result.filter(job =>
-                job.job_title?.toLowerCase().includes(lowerQuery) ||
-                job.company?.name?.toLowerCase().includes(lowerQuery) ||
-                job.description?.toLowerCase().includes(lowerQuery)
+                job.job_title?.toLowerCase().includes(q) ||
+                job.company?.name?.toLowerCase().includes(q) ||
+                job.description?.toLowerCase().includes(q)
             );
         }
 
-        // Apply experience filter
-        if (filters.experience.length > 0) {
-            result = result.filter(job => {
-                const mapped = mapJobToFilters(job);
-                return filters.experience.includes(mapped.experience);
-            });
+        // Employment type — direct API value match
+        if (filters.employmentType.length > 0) {
+            result = result.filter(job => filters.employmentType.includes(job.employment_type));
         }
-        
-        // Apply job type filter
-        if (filters.jobType.length > 0) {
-            result = result.filter(job => {
-                const mapped = mapJobToFilters(job);
-                return filters.jobType.includes(mapped.jobType);
-            });
+
+        // Work from — direct API value match
+        if (filters.workFrom.length > 0) {
+            result = result.filter(job => filters.workFrom.includes(job.work_from));
         }
-        
-        // Apply work type filter
-        if (filters.workType.length > 0) {
+
+        // Experience (jobs only — internship_detail has no experience_year)
+        if (!isInternshipsPage && filters.experience.length > 0) {
             result = result.filter(job => {
-                const mapped = mapJobToFilters(job);
-                return filters.workType.includes(mapped.workType);
+                const exp = job.job_detail?.experience_year;
+                return filters.experience.some(bucket => {
+                    if (bucket === 'fresher') return exp == null || exp === 0;
+                    if (bucket === '1-2')    return exp === 1 || exp === 2;
+                    if (bucket === '3+')     return exp != null && exp >= 3;
+                    return false;
+                });
             });
         }
 
@@ -241,44 +218,61 @@ const FindJobs = () => {
                         <button className="text-[#4A5AE8] text-xs font-semibold hover:underline" onClick={clearAllFilters}>Clear all</button>
                     </div>
 
+                    {/* Experience — only relevant for jobs, not internships */}
+                    {!isInternshipsPage && (
+                        <div className="mb-6 border-b border-gray-100 pb-4 last:border-0">
+                            <h4 className="text-sm text-[#4A5AE8] mb-3 font-semibold">Experience level</h4>
+                            {[
+                                { value: 'fresher', label: 'Fresher / No experience' },
+                                { value: '1-2',     label: '1–2 years' },
+                                { value: '3+',      label: '3+ years' },
+                            ].map(({ value, label }) => (
+                                <label key={value} className="flex items-center gap-2 mb-2 text-sm text-gray-700 cursor-pointer hover:text-primary">
+                                    <input
+                                        type="checkbox"
+                                        checked={filters.experience.includes(value)}
+                                        onChange={() => handleFilterChange('experience', value)}
+                                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                                    /> {label}
+                                </label>
+                            ))}
+                        </div>
+                    )}
+
                     <div className="mb-6 border-b border-gray-100 pb-4 last:border-0">
-                        <h4 className="text-sm text-[#4A5AE8] mb-3 font-semibold">Experienced level</h4>
-                        {["Freshers", "< 1 year", "1-2 years"].map(exp => (
-                            <label key={exp} className="flex items-center gap-2 mb-2 text-sm text-gray-700 cursor-pointer hover:text-primary">
+                        <h4 className="text-sm text-[#4A5AE8] mb-3 font-semibold">Employment type</h4>
+                        {[
+                            { value: 'full-time',  label: 'Full-time' },
+                            { value: 'part-time',  label: 'Part-time' },
+                            { value: 'contract',   label: 'Contract' },
+                            { value: 'temporary',  label: 'Temporary' },
+                            { value: 'freelance',  label: 'Freelance' },
+                        ].map(({ value, label }) => (
+                            <label key={value} className="flex items-center gap-2 mb-2 text-sm text-gray-700 cursor-pointer hover:text-primary">
                                 <input
                                     type="checkbox"
-                                    checked={filters.experience.includes(exp)}
-                                    onChange={() => handleFilterChange('experience', exp)}
+                                    checked={filters.employmentType.includes(value)}
+                                    onChange={() => handleFilterChange('employmentType', value)}
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
-                                /> {exp}
+                                /> {label}
                             </label>
                         ))}
                     </div>
 
                     <div className="mb-6 border-b border-gray-100 pb-4 last:border-0">
-                        <h4 className="text-sm text-[#4A5AE8] mb-3 font-semibold">Job-type</h4>
-                        {["Part time", "Fulltime"].map(type => (
-                            <label key={type} className="flex items-center gap-2 mb-2 text-sm text-gray-700 cursor-pointer hover:text-primary">
+                        <h4 className="text-sm text-[#4A5AE8] mb-3 font-semibold">Work type</h4>
+                        {[
+                            { value: 'remote', label: 'Remote' },
+                            { value: 'onsite', label: 'On-site' },
+                            { value: 'hybrid', label: 'Hybrid' },
+                        ].map(({ value, label }) => (
+                            <label key={value} className="flex items-center gap-2 mb-2 text-sm text-gray-700 cursor-pointer hover:text-primary">
                                 <input
                                     type="checkbox"
-                                    checked={filters.jobType.includes(type)}
-                                    onChange={() => handleFilterChange('jobType', type)}
+                                    checked={filters.workFrom.includes(value)}
+                                    onChange={() => handleFilterChange('workFrom', value)}
                                     className="rounded border-gray-300 text-primary focus:ring-primary"
-                                /> {type}
-                            </label>
-                        ))}
-                    </div>
-
-                    <div className="mb-6 border-b border-gray-100 pb-4 last:border-0">
-                        <h4 className="text-sm text-[#4A5AE8] mb-3 font-semibold">Work-type</h4>
-                        {["Remote", "On site", "Hybrid"].map(type => (
-                            <label key={type} className="flex items-center gap-2 mb-2 text-sm text-gray-700 cursor-pointer hover:text-primary">
-                                <input
-                                    type="checkbox"
-                                    checked={filters.workType.includes(type)}
-                                    onChange={() => handleFilterChange('workType', type)}
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                                /> {type}
+                                /> {label}
                             </label>
                         ))}
                     </div>

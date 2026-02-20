@@ -11,7 +11,8 @@ import {
   Calendar,
   ChevronLeft,
   CheckCircle,
-  Share2
+  Share2,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -37,8 +38,7 @@ const ApplicantJobDetails = () => {
   const fetchJobDetails = async () => {
     try {
       setLoading(true);
-      // Fetch job details
-      const response = await axios.get(`/hirings/${id}`); // Adjust endpoint if needed
+      const response = await axios.get(`${API_BASE}/hirings/${id}`);
       setJob(response.data.data || response.data);
       
       // Check if already applied (This requires an endpoint or checking user applications)
@@ -282,22 +282,49 @@ const ApplicantJobDetails = () => {
             </div>
           </div>
           
-           {/* Company Card - Optional details */}
+           {/* Company Card */}
            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                <h3 className="font-bold text-gray-900 mb-4">About the Company</h3>
-               <p className="text-sm text-gray-600 mb-4 line-clamp-4">
-                   {job.company?.description || 'No description available.'}
+               <p className="text-sm text-gray-600 mb-4">
+                   {job.company?.description || <span className="italic text-gray-400">No description available.</span>}
                </p>
+               {job.company?.industry_type && (
+                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                       <Briefcase className="w-4 h-4 flex-shrink-0" />
+                       <span className="capitalize">{job.company.industry_type.replace(/_/g, ' ')}</span>
+                   </div>
+               )}
+               {job.company?.number_of_employees && (
+                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                       <Users className="w-4 h-4 flex-shrink-0" />
+                       <span>{job.company.number_of_employees} employees</span>
+                   </div>
+               )}
                {job.company?.website && (
-                   <a 
-                    href={job.company.website}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-[#00B8D4] hover:underline font-medium"
+                   <a
+                       href={job.company.website}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="flex items-center gap-1 text-sm text-[#00B8D4] hover:underline font-medium mt-3"
                    >
                        <Globe className="w-4 h-4" />
                        Visit Website
                    </a>
+               )}
+               {job.company?.links && job.company.links.filter(l => l.link_type !== 'website').length > 0 && (
+                   <div className="mt-3 flex flex-wrap gap-2">
+                       {job.company.links.filter(l => l.link_type !== 'website').map((link, i) => (
+                           <a
+                               key={i}
+                               href={link.url}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               className="text-xs px-3 py-1 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 capitalize"
+                           >
+                               {link.title || link.link_type}
+                           </a>
+                       ))}
+                   </div>
                )}
            </div>
         </div>
